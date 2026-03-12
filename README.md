@@ -9,7 +9,10 @@ Single-app MTG tournament tracker built with Express + EJS + MySQL.
 - News feed as homepage (`/` redirects to `/news` after setup)
 - News articles with rich text and optional images
 - Footer links to custom content pages (powered by article content)
-- Leaderboard view (`/leaderboard`)
+- Leaderboard (`/leaderboard`) with three sections:
+	- Top 10 players by points
+	- Top 10 players by win chance (filtered by minimum events setting)
+	- Full player list with stats
 - Meta dashboard (`/meta`) with:
 	- year tabs (`Gesamt` + available years)
 	- KPI cards (tournaments, players, decks, entries)
@@ -17,6 +20,7 @@ Single-app MTG tournament tracker built with Express + EJS + MySQL.
 	- deck performance table
 - Tournament list and detail pages (`/tournaments`, `/tournaments/:id`)
 - Deck detail pages with Scryfall enrichment and TXT export
+- Light/Dark theme toggle in header (saved in browser localStorage)
 
 ### Authentication and account
 
@@ -63,6 +67,17 @@ Admin-only management includes:
 - Companion app list management
 - Registration confirmation policy
 - Website title update (`site_name` in `app_settings`)
+- Leaderboard threshold setting: minimum events required for win-rate top 10
+
+### Security hardening
+
+- Parameterized SQL queries (mysql2 placeholders)
+- Password hashing with bcrypt
+- CSRF protection for state-changing requests (including multipart admin news forms)
+- Session secret enforcement in production (`SESSION_SECRET` required)
+- Rate limiting on authentication endpoints (`/login`, `/register`, `/admin/login`)
+- Explicit request body size limits for urlencoded parser
+- Upload restrictions for news images (MIME check + max file size)
 
 ## Install
 
@@ -73,6 +88,10 @@ npm install
 ## Configure environment
 
 Copy `.env.example` to `.env` and set your MySQL credentials.
+
+Required for production:
+
+- `SESSION_SECRET`
 
 If email confirmation is enabled, configure:
 
@@ -139,3 +158,4 @@ After setup, homepage is `/news`.
 - Points formula: `wins * 3 + draws`
 - Header/title branding uses configured `site_name` from DB (fallbacks to locale labels)
 - Footer links are generated from published `footer_page` articles
+- Win-rate leaderboard uses admin-configured minimum events threshold
