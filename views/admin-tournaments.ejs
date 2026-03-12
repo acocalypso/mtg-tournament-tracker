@@ -32,15 +32,39 @@
   </article>
 
   <article class="card">
-    <h2><%= t('tournaments.title') %></h2>
+    <h2><%= t('admin.manageTournaments') %></h2>
     <% if (!tournaments.length) { %>
       <p><%= t('tournaments.noData') %></p>
     <% } else { %>
       <ul class="simple-list">
         <% tournaments.forEach((item) => { %>
           <li>
-            <strong><%= item.name %></strong>
-            <span class="subtle">- <%= new Date(item.played_on).toLocaleDateString() %></span>
+            <% const dateValue = item.played_on instanceof Date
+              ? item.played_on.toISOString().slice(0, 10)
+              : String(item.played_on || '').slice(0, 10); %>
+            <form method="post" action="/admin/tournaments/<%= item.id %>/update" class="stack-form">
+              <%- include("partials/csrf") %>
+              <label>
+                <%= t('admin.tournamentName') %>
+                <input type="text" name="name" value="<%= item.name %>" required />
+              </label>
+              <label>
+                <%= t('admin.date') %>
+                <input type="date" name="played_on" value="<%= dateValue %>" required />
+              </label>
+              <div>
+                <button type="submit"><%= t('admin.updateTournament') %></button>
+              </div>
+            </form>
+            <form
+              method="post"
+              action="/admin/tournaments/<%= item.id %>/delete"
+              class="inline-form"
+              onsubmit="return confirm('<%= t('admin.deleteTournamentConfirm') %>')"
+            >
+              <%- include("partials/csrf") %>
+              <button type="submit" class="danger-btn"><%= t('admin.deleteTournament') %></button>
+            </form>
           </li>
         <% }) %>
       </ul>

@@ -3,6 +3,7 @@ const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
 const sanitizeHtml = require("sanitize-html");
+const { extractCompanionStandingsFromImage } = require("../services/companionImportService");
 
 function createAdminRouter({
   adminRepository,
@@ -82,6 +83,9 @@ function createAdminRouter({
   const uploadDir = path.join(__dirname, "..", "..", "public", "uploads", "news");
   fs.mkdirSync(uploadDir, { recursive: true });
 
+  const importUploadDir = path.join(__dirname, "..", "..", "public", "uploads", "imports");
+  fs.mkdirSync(importUploadDir, { recursive: true });
+
   const upload = multer({
     storage: multer.diskStorage({
       destination: (_req, _file, cb) => cb(null, uploadDir),
@@ -102,6 +106,26 @@ function createAdminRouter({
     },
   });
 
+  const importUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, importUploadDir),
+      filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname || "").toLowerCase();
+        const safeExt = [".jpg", ".jpeg", ".png", ".webp"].includes(ext) ? ext : ".jpg";
+        cb(null, `import-${Date.now()}-${Math.round(Math.random() * 1e9)}${safeExt}`);
+      },
+    }),
+    limits: {
+      fileSize: 8 * 1024 * 1024,
+    },
+    fileFilter: (_req, file, cb) => {
+      if (String(file.mimetype || "").startsWith("image/")) {
+        return cb(null, true);
+      }
+      return cb(null, false);
+    },
+  });
+
   function uploadNewsImage(req, res, next) {
     upload.single("image")(req, res, (error) => {
       if (error) {
@@ -109,6 +133,20 @@ function createAdminRouter({
           return res.redirect(`/admin/news/${req.params.articleId}/edit?error_key=flash.admin.newsImageInvalid`);
         }
         return res.redirect("/admin/news/new?error_key=flash.admin.newsImageInvalid");
+      }
+
+      if (typeof verifyCsrfTokenStrict === "function") {
+        return verifyCsrfTokenStrict(req, res, next);
+      }
+
+      return next();
+    });
+  }
+
+  function uploadCompanionScreenshot(req, res, next) {
+    importUpload.single("screenshot")(req, res, (error) => {
+      if (error) {
+        return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotImageInvalid");
       }
 
       if (typeof verifyCsrfTokenStrict === "function") {
@@ -151,6 +189,45 @@ function createAdminRouter({
 
       await adminRepository.createTournament(name, playedOn);
       return res.redirect("/admin/tournaments?message_key=flash.admin.tournamentSaved");
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/admin/tournaments/:tournamentId/update", requireRole("maintainer"), async (req, res, next) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId || 0);
+      const name = String(req.body.name || "").trim();
+      const playedOn = String(req.body.played_on || "").trim();
+
+      if (!tournamentId || !name || !playedOn) {
+        return res.redirect("/admin/tournaments?error_key=flash.admin.tournamentRequired");
+      }
+
+      const updated = await adminRepository.updateTournament(tournamentId, name, playedOn);
+      if (!updated) {
+        return res.redirect("/admin/tournaments?error_key=flash.tournament.notFound");
+      }
+
+      return res.redirect("/admin/tournaments?message_key=flash.admin.tournamentUpdated");
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/admin/tournaments/:tournamentId/delete", requireRole("maintainer"), async (req, res, next) => {
+    try {
+      const tournamentId = Number(req.params.tournamentId || 0);
+      if (!tournamentId) {
+        return res.redirect("/admin/tournaments?error_key=flash.tournament.invalidId");
+      }
+
+      const deleted = await adminRepository.deleteTournament(tournamentId);
+      if (!deleted) {
+        return res.redirect("/admin/tournaments?error_key=flash.tournament.notFound");
+      }
+
+      return res.redirect("/admin/tournaments?message_key=flash.admin.tournamentDeleted");
     } catch (error) {
       return next(error);
     }
@@ -381,6 +458,68 @@ function createAdminRouter({
       return next(error);
     }
   });
+
+  router.post(
+    "/admin/entries/import-screenshot",
+    requireRole("maintainer"),
+    uploadCompanionScreenshot,
+    async (req, res, next) => {
+      let uploadPath = "";
+
+      try {
+        const tournamentId = Number(req.body.tournament_id || 0);
+        const defaultDeckRaw = sanitizePlainText(req.body.default_deck || "");
+        const defaultDeck = String(defaultDeckRaw || "Unknown (Companion import)").slice(0, 120);
+
+        if (!tournamentId) {
+          return res.redirect("/admin/entries/new?error_key=flash.admin.tournamentOnlyRequired");
+        }
+
+        if (!req.file?.path) {
+          return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotImageRequired");
+        }
+
+        uploadPath = req.file.path;
+
+        const imageBuffer = await fs.promises.readFile(req.file.path);
+        const { entries } = await extractCompanionStandingsFromImage(imageBuffer);
+
+        if (!entries.length) {
+          return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotNoRows");
+        }
+
+        for (const row of entries) {
+          await adminRepository.createEntry({
+            tournamentId,
+            playerName: row.playerName,
+            userId: null,
+            decklistId: null,
+            deck: defaultDeck,
+            wins: row.wins,
+            losses: row.losses,
+            draws: row.draws,
+          });
+        }
+
+        const maxRank = entries.reduce((max, row) => Math.max(max, Number(row.rank || 0)), 0);
+        const estimatedMissing = maxRank > entries.length ? maxRank - entries.length : 0;
+        const importedMessage =
+          estimatedMissing > 0
+            ? `${req.__("flash.admin.screenshotImported")}: ${entries.length} (${req.__("flash.admin.screenshotMissingRows")} ${estimatedMissing})`
+            : `${req.__("flash.admin.screenshotImported")}: ${entries.length}`;
+
+        return res.redirect(
+          `/admin/entries?message=${encodeURIComponent(importedMessage)}`
+        );
+      } catch (error) {
+        return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotParseFailed");
+      } finally {
+        if (uploadPath) {
+          fs.promises.unlink(uploadPath).catch(() => {});
+        }
+      }
+    }
+  );
 
   router.post("/admin/entries", requireRole("maintainer"), async (req, res, next) => {
     try {

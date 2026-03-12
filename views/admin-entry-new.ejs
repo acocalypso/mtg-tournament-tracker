@@ -15,6 +15,41 @@
 <%- include("partials/admin-nav", { active: "entry-new", canManageUsers }) %>
 
 <section class="card">
+  <h2><%= t('admin.importCompanionResults') %></h2>
+  <p class="subtle"><%= t('admin.importCompanionResultsHint') %></p>
+
+  <form method="post" action="/admin/entries/import-screenshot" enctype="multipart/form-data" class="stack-form">
+    <%- include("partials/csrf") %>
+
+    <label>
+      <%= t('admin.tournament') %>
+      <select name="tournament_id" required>
+        <option value=""><%= t('admin.selectTournament') %></option>
+        <% tournaments.forEach((item) => { %>
+          <option value="<%= item.id %>">
+            <%= item.name %> (<%= new Date(item.played_on).toLocaleDateString() %>)
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      <%= t('admin.importDefaultDeck') %>
+      <input type="text" name="default_deck" placeholder="<%= t('placeholders.importDefaultDeck') %>" />
+      <small class="subtle"><%= t('admin.importDefaultDeckHint') %></small>
+    </label>
+
+    <label>
+      <%= t('admin.importScreenshotImage') %>
+      <input type="file" name="screenshot" accept="image/*" required />
+      <small class="subtle"><%= t('admin.importScreenshotImageHint') %></small>
+    </label>
+
+    <button type="submit"><%= t('admin.importCompanionResultsBtn') %></button>
+  </form>
+</section>
+
+<section class="card">
   <form method="post" action="/admin/entries" class="stack-form">
     <%- include("partials/csrf") %>
     <label>

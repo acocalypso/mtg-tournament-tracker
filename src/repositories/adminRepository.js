@@ -26,7 +26,7 @@ function createAdminRepository({ pool }) {
         GROUP BY user_id, title
       ) dl ON dl.user_id = e.user_id AND dl.title = e.deck
       ORDER BY e.id DESC
-      LIMIT 10
+      LIMIT 50
       `
     );
 
@@ -89,6 +89,20 @@ function createAdminRepository({ pool }) {
 
   async function createTournament(name, playedOn) {
     await pool.query("INSERT INTO tournaments (name, played_on) VALUES (?, ?)", [name, playedOn]);
+  }
+
+  async function updateTournament(tournamentId, name, playedOn) {
+    const [result] = await pool.query(
+      "UPDATE tournaments SET name = ?, played_on = ? WHERE id = ?",
+      [name, playedOn, tournamentId]
+    );
+
+    return Number(result.affectedRows || 0);
+  }
+
+  async function deleteTournament(tournamentId) {
+    const [result] = await pool.query("DELETE FROM tournaments WHERE id = ?", [tournamentId]);
+    return Number(result.affectedRows || 0);
   }
 
   async function findUserBasicById(userId) {
@@ -281,6 +295,8 @@ function createAdminRepository({ pool }) {
   return {
     getAdminDashboardData,
     createTournament,
+    updateTournament,
+    deleteTournament,
     findUserBasicById,
     findAliasUserId,
     findDecklistById,
