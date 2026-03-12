@@ -5,8 +5,30 @@
   <p><%= t('leaderboard.subtitle') %></p>
 </section>
 
+<% const topByPoints = leaderboard?.topByPoints || []; %>
+<% const topByWinRate = leaderboard?.topByWinRate || []; %>
+<% const allPlayers = leaderboard?.allPlayers || []; %>
+<% const minEvents = leaderboard?.minEvents || 1; %>
+
+<% function renderDeckLinks(row) { %>
+  <% if (!row.decks || !row.decks.length) { %>
+    -
+  <% } else { %>
+    <% row.decks.forEach((deck, deckIndex) => { %>
+      <% if (deck.decklistId) { %>
+        <a class="table-link" href="/decklists/<%= deck.decklistId %>"><%= deck.name %></a>
+      <% } else { %>
+        <%= deck.name %>
+      <% } %>
+      <% if (deckIndex < row.decks.length - 1) { %>, <% } %>
+    <% }) %>
+  <% } %>
+  <div class="subtle"><%= row.deck_count || 0 %> <%= t('leaderboard.deckCount') %></div>
+<% } %>
+
 <section class="card">
-  <% if (!leaderboard.length) { %>
+  <h2><%= t('leaderboard.topByPoints') %></h2>
+  <% if (!topByPoints.length) { %>
     <p><%= t('leaderboard.noData') %></p>
   <% } else { %>
     <div class="table-wrap">
@@ -15,6 +37,7 @@
           <tr>
             <th>#</th>
             <th><%= t('common.player') %></th>
+            <th><%= t('leaderboard.eventsPlayed') %></th>
             <th><%= t('leaderboard.decksPlayed') %></th>
             <th><%= t('common.wld') %></th>
             <th><%= t('common.points') %></th>
@@ -22,25 +45,85 @@
           </tr>
         </thead>
         <tbody>
-          <% leaderboard.forEach((row, index) => { %>
+          <% topByPoints.forEach((row, index) => { %>
             <tr>
               <td><%= index + 1 %></td>
               <td><%= row.player_name %></td>
-              <td>
-                <% if (!row.decks || !row.decks.length) { %>
-                  -
-                <% } else { %>
-                  <% row.decks.forEach((deck, deckIndex) => { %>
-                    <% if (deck.decklistId) { %>
-                      <a class="table-link" href="/decklists/<%= deck.decklistId %>"><%= deck.name %></a>
-                    <% } else { %>
-                      <%= deck.name %>
-                    <% } %>
-                    <% if (deckIndex < row.decks.length - 1) { %>, <% } %>
-                  <% }) %>
-                <% } %>
-                <div class="subtle"><%= row.deck_count || 0 %> <%= t('leaderboard.deckCount') %></div>
-              </td>
+              <td><%= row.events_played %></td>
+              <td><% renderDeckLinks(row); %></td>
+              <td><%= row.wins %>-<%= row.losses %>-<%= row.draws %></td>
+              <td><strong><%= row.points %></strong></td>
+              <td><%= row.win_rate ?? 0 %>%</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2><%= t('leaderboard.topByWinRate') %></h2>
+  <p class="subtle"><%= t('leaderboard.topByWinRateHint') %> <strong><%= minEvents %></strong></p>
+  <% if (!topByWinRate.length) { %>
+    <p><%= t('leaderboard.noData') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><%= t('common.player') %></th>
+            <th><%= t('leaderboard.eventsPlayed') %></th>
+            <th><%= t('leaderboard.decksPlayed') %></th>
+            <th><%= t('common.wld') %></th>
+            <th><%= t('common.points') %></th>
+            <th><%= t('common.winPct') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% topByWinRate.forEach((row, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= row.player_name %></td>
+              <td><%= row.events_played %></td>
+              <td><% renderDeckLinks(row); %></td>
+              <td><%= row.wins %>-<%= row.losses %>-<%= row.draws %></td>
+              <td><strong><%= row.points %></strong></td>
+              <td><%= row.win_rate ?? 0 %>%</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2><%= t('leaderboard.allPlayers') %></h2>
+  <% if (!allPlayers.length) { %>
+    <p><%= t('leaderboard.noData') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><%= t('common.player') %></th>
+            <th><%= t('leaderboard.eventsPlayed') %></th>
+            <th><%= t('leaderboard.decksPlayed') %></th>
+            <th><%= t('common.wld') %></th>
+            <th><%= t('common.points') %></th>
+            <th><%= t('common.winPct') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% allPlayers.forEach((row, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= row.player_name %></td>
+              <td><%= row.events_played %></td>
+              <td><% renderDeckLinks(row); %></td>
               <td><%= row.wins %>-<%= row.losses %>-<%= row.draws %></td>
               <td><strong><%= row.points %></strong></td>
               <td><%= row.win_rate ?? 0 %>%</td>

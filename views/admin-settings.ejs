@@ -52,6 +52,25 @@
       <button type="submit"><%= t('admin.savePolicy') %></button>
     </form>
   </article>
+
+  <article class="card">
+    <h2><%= t('admin.leaderboardSettings') %></h2>
+    <p class="subtle"><%= t('admin.leaderboardSettingsHint') %></p>
+    <form method="post" action="/admin/settings/leaderboard" class="stack-form">
+      <label>
+        <%= t('admin.leaderboardMinEvents') %>
+        <input
+          type="number"
+          name="leaderboard_min_events_for_winrate"
+          min="1"
+          step="1"
+          required
+          value="<%= leaderboardMinEvents || 1 %>"
+        />
+      </label>
+      <button type="submit"><%= t('admin.saveLeaderboardSettings') %></button>
+    </form>
+  </article>
 </section>
 
 <%- include("partials/footer") %>

@@ -1,6 +1,6 @@
 const express = require("express");
 
-function createPublicRouter({ publicRepository }) {
+function createPublicRouter({ publicRepository, getLeaderboardMinEvents }) {
   const router = express.Router();
 
   router.get("/news", async (req, res, next) => {
@@ -39,11 +39,12 @@ function createPublicRouter({ publicRepository }) {
 
   router.get("/leaderboard", async (req, res, next) => {
     try {
-      const rows = await publicRepository.getLeaderboard();
+      const minEvents = typeof getLeaderboardMinEvents === "function" ? await getLeaderboardMinEvents() : 1;
+      const leaderboard = await publicRepository.getLeaderboard({ minEvents });
 
       return res.render("leaderboard", {
         title: req.__("nav.leaderboard"),
-        leaderboard: rows,
+        leaderboard,
       });
     } catch (error) {
       return next(error);

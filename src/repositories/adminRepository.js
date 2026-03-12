@@ -154,6 +154,17 @@ function createAdminRepository({ pool }) {
     );
   }
 
+  async function updateLeaderboardMinEventsSetting(minEvents) {
+    await pool.query(
+      `
+      INSERT INTO app_settings (setting_key, setting_value)
+      VALUES ('leaderboard_min_events_for_winrate', ?)
+      ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+      `,
+      [String(minEvents)]
+    );
+  }
+
   async function upsertCompanionApp(appName) {
     await pool.query(
       `
@@ -277,6 +288,7 @@ function createAdminRepository({ pool }) {
     updateUserRole,
     updateRegistrationEmailSetting,
     updateSiteNameSetting,
+    updateLeaderboardMinEventsSetting,
     upsertCompanionApp,
     mapAliasToUser,
     createNewsArticle,

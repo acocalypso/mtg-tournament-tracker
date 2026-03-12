@@ -70,11 +70,16 @@ function createPublicRepository({ pool }) {
     return rows[0] || null;
   }
 
-  async function getLeaderboard() {
+  async function getLeaderboard(options = {}) {
+    const minEvents = Number.isInteger(Number(options.minEvents)) && Number(options.minEvents) > 0
+      ? Number(options.minEvents)
+      : 1;
+
     const [rows] = await pool.query(
       `
       SELECT
         player_name,
+        COUNT(DISTINCT tournament_id) AS events_played,
         CAST(SUM(wins) AS UNSIGNED) AS wins,
         CAST(SUM(losses) AS UNSIGNED) AS losses,
         CAST(SUM(draws) AS UNSIGNED) AS draws,
@@ -125,7 +130,45 @@ function createPublicRepository({ pool }) {
       row.deck_count = decks.length;
     }
 
-    return rows;
+    const allPlayers = [...rows].sort((a, b) => {
+      const pointsDelta = Number(b.points || 0) - Number(a.points || 0);
+      if (pointsDelta !== 0) {
+        return pointsDelta;
+      }
+      const winsDelta = Number(b.wins || 0) - Number(a.wins || 0);
+      if (winsDelta !== 0) {
+        return winsDelta;
+      }
+      return String(a.player_name || "").localeCompare(String(b.player_name || ""));
+    });
+
+    const topByPoints = allPlayers.slice(0, 10);
+
+    const topByWinRate = allPlayers
+      .filter((row) => Number(row.events_played || 0) >= minEvents)
+      .sort((a, b) => {
+        const winRateDelta = Number(b.win_rate || 0) - Number(a.win_rate || 0);
+        if (winRateDelta !== 0) {
+          return winRateDelta;
+        }
+        const eventsDelta = Number(b.events_played || 0) - Number(a.events_played || 0);
+        if (eventsDelta !== 0) {
+          return eventsDelta;
+        }
+        const pointsDelta = Number(b.points || 0) - Number(a.points || 0);
+        if (pointsDelta !== 0) {
+          return pointsDelta;
+        }
+        return String(a.player_name || "").localeCompare(String(b.player_name || ""));
+      })
+      .slice(0, 10);
+
+    return {
+      minEvents,
+      topByPoints,
+      topByWinRate,
+      allPlayers,
+    };
   }
 
   async function getMeta(options = {}) {

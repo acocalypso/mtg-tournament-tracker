@@ -11,6 +11,7 @@ function createAdminRouter({
   getCompanionApps,
   isEmailConfirmationRequired,
   getSetupValues,
+  getLeaderboardMinEvents,
 }) {
   const router = express.Router();
 
@@ -67,10 +68,13 @@ function createAdminRouter({
     const companionApps = await getCompanionApps();
     const emailConfirmationRequired = await isEmailConfirmationRequired();
     const setupValues = typeof getSetupValues === "function" ? await getSetupValues() : { site_name: "" };
+    const leaderboardMinEvents =
+      typeof getLeaderboardMinEvents === "function" ? await getLeaderboardMinEvents() : 1;
     return {
       companionApps,
       emailConfirmationRequired,
       siteName: String(setupValues.site_name || "").trim(),
+      leaderboardMinEvents,
     };
   }
 
@@ -493,12 +497,13 @@ function createAdminRouter({
 
   router.get("/admin/settings", requireRole("admin"), async (req, res, next) => {
     try {
-      const { emailConfirmationRequired, siteName } = await loadAdminSettingsData();
+      const { emailConfirmationRequired, siteName, leaderboardMinEvents } = await loadAdminSettingsData();
 
       return res.render("admin-settings", {
         title: req.__("admin.navSettings"),
         emailConfirmationRequired,
         siteName,
+        leaderboardMinEvents,
         canManageUsers: true,
         message: res.locals.queryMessage,
         error: res.locals.queryError,
@@ -528,6 +533,20 @@ function createAdminRouter({
 
       await adminRepository.updateSiteNameSetting(siteName);
       return res.redirect("/admin/settings?message_key=flash.admin.siteNameUpdated");
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/admin/settings/leaderboard", requireRole("admin"), async (req, res, next) => {
+    try {
+      const minEvents = Number(req.body.leaderboard_min_events_for_winrate || 1);
+      if (!Number.isInteger(minEvents) || minEvents < 1) {
+        return res.redirect("/admin/settings?error_key=flash.admin.leaderboardMinEventsInvalid");
+      }
+
+      await adminRepository.updateLeaderboardMinEventsSetting(minEvents);
+      return res.redirect("/admin/settings?message_key=flash.admin.leaderboardMinEventsUpdated");
     } catch (error) {
       return next(error);
     }

@@ -69,6 +69,18 @@ function createSettingsService({ pool }) {
     return String(rows[0]?.setting_value || "").trim();
   }
 
+  async function getLeaderboardMinEvents() {
+    const [rows] = await pool.query(
+      "SELECT setting_value FROM app_settings WHERE setting_key = 'leaderboard_min_events_for_winrate' LIMIT 1"
+    );
+
+    const raw = Number(rows[0]?.setting_value || 1);
+    if (!Number.isInteger(raw) || raw < 1) {
+      return 1;
+    }
+    return raw;
+  }
+
   return {
     getCompanionApps,
     getDeckFormats,
@@ -76,6 +88,7 @@ function createSettingsService({ pool }) {
     isEmailConfirmationRequired,
     getSetupValues,
     getSiteName,
+    getLeaderboardMinEvents,
   };
 }
 

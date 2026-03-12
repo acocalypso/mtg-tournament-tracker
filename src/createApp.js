@@ -76,6 +76,7 @@ function createApp(options = {}) {
     isEmailConfirmationRequired,
     getSetupValues,
     getSiteName,
+    getLeaderboardMinEvents,
   } = settingsService;
 
   const { isValidEmail, buildTokenHash, sendVerificationEmail } = emailService;
@@ -227,7 +228,7 @@ function createApp(options = {}) {
     })
   );
 
-  app.use(createPublicRouter({ publicRepository }));
+  app.use(createPublicRouter({ publicRepository, getLeaderboardMinEvents }));
 
   app.use(
     createAdminRouter({
@@ -237,6 +238,7 @@ function createApp(options = {}) {
       getCompanionApps,
       isEmailConfirmationRequired,
       getSetupValues,
+      getLeaderboardMinEvents,
     })
   );
 
