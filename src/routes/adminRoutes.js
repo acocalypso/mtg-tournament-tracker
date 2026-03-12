@@ -12,6 +12,7 @@ function createAdminRouter({
   isEmailConfirmationRequired,
   getSetupValues,
   getLeaderboardMinEvents,
+  verifyCsrfTokenStrict,
 }) {
   const router = express.Router();
 
@@ -109,6 +110,11 @@ function createAdminRouter({
         }
         return res.redirect("/admin/news/new?error_key=flash.admin.newsImageInvalid");
       }
+
+      if (typeof verifyCsrfTokenStrict === "function") {
+        return verifyCsrfTokenStrict(req, res, next);
+      }
+
       return next();
     });
   }

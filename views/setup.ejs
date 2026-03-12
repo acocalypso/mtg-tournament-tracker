@@ -15,6 +15,7 @@
 <section class="card auth-card">
   <h2><%= t('setup.createAdmin') %></h2>
   <form method="post" action="/setup" class="stack-form">
+    <%- include("partials/csrf") %>
     <label>
       <%= t('labels.username') %>
       <input

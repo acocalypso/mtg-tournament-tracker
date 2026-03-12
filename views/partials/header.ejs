@@ -27,6 +27,7 @@
             <a href="/admin"><%= t('nav.admin') %></a>
           <% } %>
           <form method="post" action="/logout" class="nav-logout-form">
+            <%- include("csrf") %>
             <button type="submit" class="nav-logout-btn"><%= t('nav.logout') %></button>
           </form>
         <% } else { %>
@@ -36,6 +37,7 @@
         <div class="nav-lang-switch" aria-label="<%= t('lang.label') %>">
           <span class="nav-lang-label"><%= t('lang.label') %></span>
           <form method="post" action="/language" class="nav-lang-form">
+            <%- include("csrf") %>
             <input type="hidden" name="return_to" value="<%= requestPath || '/' %>" />
             <input type="hidden" name="locale" value="en" />
             <button
@@ -48,6 +50,7 @@
             </button>
           </form>
           <form method="post" action="/language" class="nav-lang-form">
+            <%- include("csrf") %>
             <input type="hidden" name="return_to" value="<%= requestPath || '/' %>" />
             <input type="hidden" name="locale" value="de" />
             <button

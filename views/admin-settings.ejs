@@ -19,6 +19,7 @@
     <h2><%= t('admin.websiteSettings') %></h2>
     <p class="subtle"><%= t('admin.websiteSettingsHint') %></p>
     <form method="post" action="/admin/settings/site-name" class="stack-form">
+      <%- include("partials/csrf") %>
       <label>
         <%= t('setupConfig.siteName') %>
         <input
@@ -38,6 +39,7 @@
     <h2><%= t('admin.registrationPolicy') %></h2>
     <p class="subtle"><%= t('admin.registrationPolicyHint') %></p>
     <form method="post" action="/admin/settings/registration" class="stack-form">
+      <%- include("partials/csrf") %>
       <label>
         <%= t('admin.emailConfirmUsers') %>
         <select name="registration_email_confirmation_required" required>
@@ -57,6 +59,7 @@
     <h2><%= t('admin.leaderboardSettings') %></h2>
     <p class="subtle"><%= t('admin.leaderboardSettingsHint') %></p>
     <form method="post" action="/admin/settings/leaderboard" class="stack-form">
+      <%- include("partials/csrf") %>
       <label>
         <%= t('admin.leaderboardMinEvents') %>
         <input

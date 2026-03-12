@@ -2,12 +2,14 @@ const express = require("express");
 const i18n = require("i18n");
 const path = require("path");
 const session = require("express-session");
+const rateLimit = require("express-rate-limit");
 const pool = require("./db");
 const { createSchemaService } = require("./services/schemaService");
 const { createSettingsService } = require("./services/settingsService");
 const { createEmailService } = require("./services/emailService");
 const { parseDecklist, lookupScryfallCards } = require("./services/deckService");
 const { createAuthGuards } = require("./middleware/authGuards");
+const { createCsrfProtection } = require("./middleware/csrf");
 const { createSetupAuthRouter } = require("./routes/setupAuthRoutes");
 const { createProfileDeckRouter } = require("./routes/profileDeckRoutes");
 const { createPublicRouter } = require("./routes/publicRoutes");
@@ -19,6 +21,8 @@ const { createPublicRepository } = require("./repositories/publicRepository");
 
 function createApp(options = {}) {
   const app = express();
+
+  const sessionSecret = options.sessionSecret || process.env.SESSION_SECRET || "";
 
   i18n.configure({
     locales: ["en", "de"],
@@ -47,6 +51,10 @@ function createApp(options = {}) {
       admin: 3,
     },
   };
+
+  if (config.isProd && !sessionSecret) {
+    throw new Error("FATAL: SESSION_SECRET is required in production.");
+  }
 
   const services = options.services || {};
   const repositories = options.repositories || {};
@@ -80,6 +88,7 @@ function createApp(options = {}) {
   } = settingsService;
 
   const { isValidEmail, buildTokenHash, sendVerificationEmail } = emailService;
+  const csrfProtection = createCsrfProtection();
 
   function hasRole(currentRole, requiredRole) {
     return (config.roleWeight[currentRole] || 0) >= (config.roleWeight[requiredRole] || 0);
@@ -100,7 +109,7 @@ function createApp(options = {}) {
 
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "please-change-this-session-secret",
+      secret: sessionSecret || "please-change-this-session-secret",
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -112,9 +121,26 @@ function createApp(options = {}) {
     })
   );
 
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({ extended: true, limit: "200kb" }));
   app.use(express.static(path.join(__dirname, "..", "public")));
   app.use(i18n.init);
+
+  function createPostRateLimiter(maxRequests) {
+    return rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: maxRequests,
+      standardHeaders: true,
+      legacyHeaders: false,
+      skip: (req) => String(req.method || "GET").toUpperCase() !== "POST",
+      handler: (req, res) => {
+        res.status(429).send(req.__("error.tooManyRequests"));
+      },
+    });
+  }
+
+  app.use("/login", createPostRateLimiter(5));
+  app.use("/register", createPostRateLimiter(5));
+  app.use("/admin/login", createPostRateLimiter(5));
 
   app.use((req, res, next) => {
     if (req.session?.locale) {
@@ -122,6 +148,9 @@ function createApp(options = {}) {
     }
     next();
   });
+
+  app.use(csrfProtection.attachToken);
+  app.use(csrfProtection.verifyToken);
 
   app.use((req, res, next) => {
     const resolveQueryText = (name) => {
@@ -239,6 +268,7 @@ function createApp(options = {}) {
       isEmailConfirmationRequired,
       getSetupValues,
       getLeaderboardMinEvents,
+      verifyCsrfTokenStrict: csrfProtection.verifyTokenStrict,
     })
   );
 

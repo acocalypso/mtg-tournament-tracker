@@ -18,6 +18,7 @@
 
 <section class="card">
   <form id="news-create-form" method="post" action="/admin/news" class="stack-form" enctype="multipart/form-data">
+    <%- include("partials/csrf") %>
     <label>
       <%= t('admin.newsTitle') %>
       <input type="text" name="title" required maxlength="180" placeholder="<%= t('placeholders.newsTitle') %>" />

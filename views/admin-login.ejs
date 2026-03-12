@@ -15,6 +15,7 @@
 <section class="card auth-card">
   <h2><%= t('login.signIn') %></h2>
   <form method="post" action="/admin/login" class="stack-form">
+    <%- include("partials/csrf") %>
     <label>
       <%= t('labels.username') %>
       <input type="text" name="username" required minlength="3" maxlength="80" />

@@ -14,6 +14,7 @@
 
 <section class="card">
   <form method="post" action="/decklists/<%= decklist.id %>/update" class="stack-form">
+    <%- include("partials/csrf") %>
     <label>
       <%= t('profile.deckTitle') %>
       <input type="text" name="title" required maxlength="160" value="<%= decklist.title %>" />

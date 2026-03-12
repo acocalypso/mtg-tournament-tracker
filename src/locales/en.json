@@ -246,6 +246,8 @@
   "error.generic": "Something went wrong. Check DB connection and schema setup.",
   "error.dbAccessDenied": "Database access denied. Check DB_USER and DB_PASSWORD in your .env file.",
   "error.dbConnectionRefused": "Cannot connect to MySQL. Check DB_HOST, DB_PORT, and that MySQL is running.",
+  "error.csrfInvalid": "Security token is missing or invalid. Please refresh and try again.",
+  "error.tooManyRequests": "Too many requests. Please wait and try again.",
   "flash.auth.loginRequired": "Please log in to continue",
   "flash.auth.completeSetupFirst": "Complete initial setup to continue",
   "flash.auth.noPermission": "You do not have permission for that page",

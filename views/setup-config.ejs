@@ -15,6 +15,7 @@
 <section class="card auth-card">
   <h2><%= t('setupConfig.core') %></h2>
   <form method="post" action="/setup/config" class="stack-form">
+    <%- include("partials/csrf") %>
     <label>
       <%= t('setupConfig.siteName') %>
       <input

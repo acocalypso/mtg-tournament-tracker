@@ -16,6 +16,7 @@
 
 <section class="card">
   <form method="post" action="/admin/entries" class="stack-form">
+    <%- include("partials/csrf") %>
     <label>
       <%= t('admin.tournament') %>
       <select name="tournament_id" required>

@@ -246,6 +246,8 @@
   "error.generic": "Etwas ist schiefgelaufen. Prüfe DB-Verbindung und Schema-Setup.",
   "error.dbAccessDenied": "Datenbankzugriff verweigert. Prüfe DB_USER und DB_PASSWORD in deiner .env-Datei.",
   "error.dbConnectionRefused": "Verbindung zu MySQL nicht möglich. Prüfe DB_HOST, DB_PORT und ob MySQL läuft.",
+  "error.csrfInvalid": "Sicherheitstoken fehlt oder ist ungültig. Bitte Seite neu laden und erneut versuchen.",
+  "error.tooManyRequests": "Zu viele Anfragen. Bitte warte kurz und versuche es erneut.",
   "flash.auth.loginRequired": "Bitte melde dich an, um fortzufahren",
   "flash.auth.completeSetupFirst": "Schließe die Ersteinrichtung ab, um fortzufahren",
   "flash.auth.noPermission": "Du hast keine Berechtigung für diese Seite",
