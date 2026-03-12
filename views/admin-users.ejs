@@ -1,0 +1,89 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.navUserManagement') %></h1>
+  <p><%= t('admin.usersPageHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "users", canManageUsers }) %>
+
+<section class="grid">
+  <article class="card">
+    <h2><%= t('admin.companionApps') %></h2>
+    <p class="subtle"><%= t('admin.companionAppsHint') %></p>
+    <form method="post" action="/admin/apps" class="stack-form">
+      <label>
+        <%= t('admin.newAppName') %>
+        <input type="text" name="app_name" required maxlength="120" placeholder="Companion" />
+      </label>
+      <button type="submit"><%= t('admin.saveApp') %></button>
+    </form>
+    <% if (companionApps?.length) { %>
+      <p class="subtle"><%= t('admin.currentApps') %> <%= companionApps.map((item) => item.app_name).join(", ") %></p>
+    <% } %>
+  </article>
+
+  <article class="card">
+    <h2><%= t('admin.assignRoles') %></h2>
+    <p class="subtle"><%= t('admin.assignRolesHint') %></p>
+    <form method="post" action="/admin/users/role" class="stack-form">
+      <label>
+        <%= t('admin.user') %>
+        <select name="user_id" required>
+          <option value=""><%= t('admin.selectUser') %></option>
+          <% users.forEach((user) => { %>
+            <option value="<%= user.id %>"><%= user.username %> (current: <%= user.role %>)</option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('admin.role') %>
+        <select name="role" required>
+          <option value="user"><%= t('role.user') %></option>
+          <option value="maintainer"><%= t('role.maintainer') %></option>
+          <option value="admin"><%= t('role.admin') %></option>
+        </select>
+      </label>
+      <button type="submit"><%= t('admin.updateRole') %></button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2><%= t('admin.mapAlias') %></h2>
+    <p class="subtle"><%= t('admin.mapAliasHint') %></p>
+    <form method="post" action="/admin/aliases/map" class="stack-form">
+      <label>
+        <%= t('admin.legacyName') %>
+        <select name="alias_name" required>
+          <option value=""><%= t('admin.selectLegacyName') %></option>
+          <% unmappedNames.forEach((item) => { %>
+            <option value="<%= item.player_name %>">
+              <%= item.player_name %> (<%= item.entries_count %> entries)
+            </option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('admin.registeredUser') %>
+        <select name="user_id" required>
+          <option value=""><%= t('admin.selectUser') %></option>
+          <% users.forEach((user) => { %>
+            <option value="<%= user.id %>">
+              <%= user.username %> <% if (user.companion_username) { %>- <%= user.companion_username %><% } %>
+            </option>
+          <% }) %>
+        </select>
+      </label>
+      <button type="submit"><%= t('admin.mapAliasBtn') %></button>
+    </form>
+  </article>
+</section>
+
+<%- include("partials/footer") %>

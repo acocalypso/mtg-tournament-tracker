@@ -1,0 +1,186 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('meta.title') %></h1>
+  <p><%= t('meta.subtitle') %></p>
+</section>
+
+<section class="meta-panel">
+  <div class="meta-year-tabs" role="tablist" aria-label="<%= t('meta.yearTabs') %>">
+    <a class="meta-tab <%= !selectedYear ? 'is-active' : '' %>" href="/meta?year=all"><%= t('meta.yearAll') %></a>
+    <% years.forEach((year) => { %>
+      <a class="meta-tab <%= selectedYear === year ? 'is-active' : '' %>" href="/meta?year=<%= year %>"><%= year %></a>
+    <% }) %>
+  </div>
+
+  <div class="meta-kpis">
+    <article class="meta-kpi-card">
+      <strong><%= stats.tournaments %></strong>
+      <span><%= t('meta.kpiTournaments') %></span>
+    </article>
+    <article class="meta-kpi-card">
+      <strong><%= stats.players %></strong>
+      <span><%= t('meta.kpiPlayers') %></span>
+    </article>
+    <article class="meta-kpi-card">
+      <strong><%= stats.decks %></strong>
+      <span><%= t('meta.kpiDecks') %></span>
+    </article>
+    <article class="meta-kpi-card">
+      <strong><%= stats.totalEntries %></strong>
+      <span><%= t('meta.kpiEntries') %></span>
+    </article>
+  </div>
+
+  <section class="card meta-chart-card">
+    <h2>
+      <%= t('meta.distributionTitle') %>
+      <% if (selectedYear) { %>
+        - <%= selectedYear %>
+      <% } %>
+    </h2>
+
+    <% if (!meta.length) { %>
+      <p><%= t('meta.noData') %></p>
+    <% } else { %>
+      <div class="meta-visual-grid">
+        <div class="meta-chart-wrap">
+          <canvas id="metaChart" class="meta-chart-canvas" aria-label="Meta distribution chart"></canvas>
+        </div>
+        <ul class="meta-legend" id="metaLegend"></ul>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><%= t('common.deck') %></th>
+              <th><%= t('meta.pilots') %></th>
+              <th><%= t('common.wld') %></th>
+              <th><%= t('common.points') %></th>
+              <th><%= t('meta.share') %></th>
+              <th><%= t('common.winPct') %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% meta.forEach((row) => { %>
+              <tr>
+                <td><%= row.deck %></td>
+                <td><%= row.pilots %></td>
+                <td><%= row.wins %>-<%= row.losses %>-<%= row.draws %></td>
+                <td><%= row.points %></td>
+                <td><%= totalEntries ? ((row.pilots / totalEntries) * 100).toFixed(1) : 0 %>%</td>
+                <td><%= row.win_rate ?? 0 %>%</td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="meta-data-source" type="application/json"><%- JSON.stringify(meta || []) %></script>
+<div id="meta-total-source" data-total-entries="<%= totalEntries || 0 %>" hidden></div>
+<script>
+  (function () {
+    const dataSource = document.getElementById("meta-data-source");
+    const totalSource = document.getElementById("meta-total-source");
+    if (!dataSource) {
+      return;
+    }
+
+    let rows = [];
+    try {
+      rows = JSON.parse(dataSource.textContent || "[]");
+    } catch (_error) {
+      rows = [];
+    }
+
+    const totalEntries = Number(totalSource?.dataset.totalEntries || 0);
+    const chartCanvas = document.getElementById("metaChart");
+    const legendRoot = document.getElementById("metaLegend");
+
+    if (!rows.length || !chartCanvas || !legendRoot || !window.Chart) {
+      return;
+    }
+
+    const palette = [
+      "#8f6ad8",
+      "#6c9bd2",
+      "#5cbf8b",
+      "#d8b65c",
+      "#d86f6f",
+      "#6ec8c1",
+      "#c58fdb",
+      "#88a0c2",
+      "#f18b3a",
+      "#a6d26f",
+      "#d4a7a7",
+      "#f2d570",
+      "#73c7ff",
+      "#bc8cff",
+      "#84d7b8",
+      "#f29cb0",
+      "#91a7ff",
+      "#eab676",
+      "#7fd0cf",
+      "#c2c2d6"
+    ];
+
+    const labels = rows.map((item) => item.deck);
+    const data = rows.map((item) => Number(item.pilots || 0));
+    const colors = rows.map((_, index) => palette[index % palette.length]);
+
+    new window.Chart(chartCanvas, {
+      type: "pie",
+      data: {
+        labels,
+        datasets: [
+          {
+            data,
+            backgroundColor: colors,
+            borderColor: "#101123",
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      },
+    });
+
+    rows.forEach((row, index) => {
+      const item = document.createElement("li");
+      item.className = "meta-legend-item";
+
+      const dot = document.createElement("span");
+      dot.className = "meta-legend-dot";
+      dot.style.backgroundColor = colors[index];
+
+      const name = document.createElement("span");
+      name.className = "meta-legend-name";
+      name.textContent = row.deck;
+
+      const share = document.createElement("span");
+      share.className = "meta-legend-share";
+      const pct = totalEntries ? ((Number(row.pilots || 0) / totalEntries) * 100).toFixed(1) : "0.0";
+      share.textContent = `${pct}%`;
+
+      item.appendChild(dot);
+      item.appendChild(name);
+      item.appendChild(share);
+      legendRoot.appendChild(item);
+    });
+  })();
+</script>
+
+<%- include("partials/footer") %>

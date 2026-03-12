@@ -1,0 +1,31 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('login.title') %></h1>
+  <p><%= t('login.subtitle') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="card auth-card">
+  <h2><%= t('login.signIn') %></h2>
+  <form method="post" action="/login" class="stack-form">
+    <label>
+      <%= t('labels.username') %>
+      <input type="text" name="username" required minlength="3" maxlength="80" />
+    </label>
+    <label>
+      <%= t('labels.password') %>
+      <input type="password" name="password" required />
+    </label>
+    <button type="submit"><%= t('nav.login') %></button>
+  </form>
+  <p class="subtle"><%= t('login.noAccount') %> <a href="/register"><%= t('login.registerHere') %></a>.</p>
+</section>
+
+<%- include("partials/footer") %>

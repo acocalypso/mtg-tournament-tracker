@@ -1,0 +1,39 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('register.title') %></h1>
+  <p><%= t('register.subtitle') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="card auth-card">
+  <h2><%= t('register.register') %></h2>
+  <form method="post" action="/register" class="stack-form">
+    <label>
+      <%= t('labels.username') %>
+      <input type="text" name="username" required minlength="3" maxlength="80" />
+    </label>
+    <label>
+      <%= t('labels.email') %>
+      <input type="email" name="email" required maxlength="190" placeholder="<%= t('placeholders.email') %>" />
+    </label>
+    <label>
+      <%= t('labels.password') %>
+      <input type="password" name="password" required minlength="10" />
+    </label>
+    <label>
+      <%= t('labels.confirmPassword') %>
+      <input type="password" name="confirm_password" required minlength="10" />
+    </label>
+    <button type="submit"><%= t('register.register') %></button>
+  </form>
+  <p class="subtle"><%= t('register.already') %> <a href="/login"><%= t('nav.login') %></a>.</p>
+</section>
+
+<%- include("partials/footer") %>

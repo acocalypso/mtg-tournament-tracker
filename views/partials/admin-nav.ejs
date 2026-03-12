@@ -1,0 +1,27 @@
+<section class="card admin-nav-wrap">
+  <h2><%= t('admin.navTitle') %></h2>
+  <div class="admin-nav-groups">
+    <div class="admin-nav-group">
+      <h3><%= t('admin.groupOverview') %></h3>
+      <a class="<%= active === 'dashboard' ? 'is-active' : '' %>" href="/admin"><%= t('admin.navDashboard') %></a>
+    </div>
+    <div class="admin-nav-group">
+      <h3><%= t('admin.groupContent') %></h3>
+      <a class="<%= active === 'news-list' ? 'is-active' : '' %>" href="/admin/news"><%= t('admin.navLatestNews') %></a>
+      <a class="<%= active === 'news-new' ? 'is-active' : '' %>" href="/admin/news/new"><%= t('admin.navCreateNews') %></a>
+    </div>
+    <div class="admin-nav-group">
+      <h3><%= t('admin.groupEvents') %></h3>
+      <a class="<%= active === 'tournaments' ? 'is-active' : '' %>" href="/admin/tournaments"><%= t('admin.navCreateTournament') %></a>
+      <a class="<%= active === 'entry-new' ? 'is-active' : '' %>" href="/admin/entries/new"><%= t('admin.navAddEntry') %></a>
+      <a class="<%= active === 'entries' ? 'is-active' : '' %>" href="/admin/entries"><%= t('admin.navRecentEntries') %></a>
+    </div>
+    <% if (canManageUsers) { %>
+      <div class="admin-nav-group">
+        <h3><%= t('admin.groupUsers') %></h3>
+        <a class="<%= active === 'users' ? 'is-active' : '' %>" href="/admin/users"><%= t('admin.navUserManagement') %></a>
+        <a class="<%= active === 'settings' ? 'is-active' : '' %>" href="/admin/settings"><%= t('admin.navSettings') %></a>
+      </div>
+    <% } %>
+  </div>
+</section>

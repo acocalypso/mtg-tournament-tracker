@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="<%= currentLocale || 'en' %>">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %> | <%= siteName || t('app.title') %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <header class="site-header">
+      <a class="brand" href="/"><%= siteName || t('brand') %></a>
+      <nav class="main-nav">
+        <a href="/news"><%= t('nav.news') %></a>
+        <a href="/leaderboard"><%= t('nav.leaderboard') %></a>
+        <a href="/meta"><%= t('nav.meta') %></a>
+        <a href="/tournaments"><%= t('nav.tournaments') %></a>
+        <% if (isAuthenticated) { %>
+          <a href="/profile"><%= t('nav.profile') %></a>
+          <% if (isStaff) { %>
+            <a href="/admin"><%= t('nav.admin') %></a>
+          <% } %>
+          <form method="post" action="/logout" class="nav-logout-form">
+            <button type="submit" class="nav-logout-btn"><%= t('nav.logout') %></button>
+          </form>
+        <% } else { %>
+          <a href="/login"><%= t('nav.login') %></a>
+          <a href="/register"><%= t('nav.register') %></a>
+        <% } %>
+        <div class="nav-lang-switch" aria-label="<%= t('lang.label') %>">
+          <span class="nav-lang-label"><%= t('lang.label') %></span>
+          <form method="post" action="/language" class="nav-lang-form">
+            <input type="hidden" name="return_to" value="<%= requestPath || '/' %>" />
+            <input type="hidden" name="locale" value="en" />
+            <button
+              type="submit"
+              class="nav-flag-btn <%= currentLocale === 'en' ? 'is-active' : '' %>"
+              title="<%= t('lang.english') %>"
+              aria-label="<%= t('lang.english') %>"
+            >
+              <span aria-hidden="true">🇬🇧</span>
+            </button>
+          </form>
+          <form method="post" action="/language" class="nav-lang-form">
+            <input type="hidden" name="return_to" value="<%= requestPath || '/' %>" />
+            <input type="hidden" name="locale" value="de" />
+            <button
+              type="submit"
+              class="nav-flag-btn <%= currentLocale === 'de' ? 'is-active' : '' %>"
+              title="<%= t('lang.german') %>"
+              aria-label="<%= t('lang.german') %>"
+            >
+              <span aria-hidden="true">🇩🇪</span>
+            </button>
+          </form>
+        </div>
+      </nav>
+    </header>
+    <main class="page-shell">

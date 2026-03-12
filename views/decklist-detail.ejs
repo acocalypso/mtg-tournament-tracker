@@ -1,0 +1,75 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= decklist.title %></h1>
+  <p>
+    <%= t('deckDetail.format') %>: <strong><%= decklist.format %></strong> | <%= t('deckDetail.owner') %>: <strong><%= decklist.username %></strong>
+  </p>
+  <p>
+    <a class="table-link" href="/decklists/<%= decklist.id %>/export.txt"><%= t('deckDetail.exportTxt') %></a>
+  </p>
+  <% if (message) { %>
+    <p class="flash success"><%= message %></p>
+  <% } %>
+  <% if (error) { %>
+    <p class="flash error"><%= error %></p>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2><%= t('deckDetail.main') %></h2>
+  <% if (!mainboardCards.length) { %>
+    <p><%= t('deckDetail.mainEmpty') %></p>
+  <% } else { %>
+    <div class="deck-grid">
+      <% mainboardCards.forEach((card) => { %>
+        <article class="card-item">
+          <img src="<%= card.details.imageUri %>" alt="<%= card.cardName %>" loading="lazy" />
+          <h3><%= card.quantity %>x <%= card.details?.cardName || card.cardName %></h3>
+          <% if (card.details?.manaCost) { %>
+            <p><strong><%= t('deckDetail.mana') %></strong> <%= card.details.manaCost %></p>
+          <% } %>
+          <% if (card.details?.typeLine) { %>
+            <p><%= card.details.typeLine %></p>
+          <% } %>
+          <% if (card.details?.oracleText) { %>
+            <p class="subtle"><%= card.details.oracleText %></p>
+          <% } %>
+          <% if (card.details?.scryfallUri) { %>
+            <p><a href="<%= card.details.scryfallUri %>" target="_blank" rel="noreferrer"><%= t('deckDetail.openScryfall') %></a></p>
+          <% } %>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2><%= t('deckDetail.sideboard') %></h2>
+  <% if (!sideboardCards.length) { %>
+    <p><%= t('deckDetail.sideboardEmpty') %></p>
+  <% } else { %>
+    <div class="deck-grid">
+      <% sideboardCards.forEach((card) => { %>
+        <article class="card-item">
+          <img src="<%= card.details.imageUri %>" alt="<%= card.cardName %>" loading="lazy" />
+          <h3><%= card.quantity %>x <%= card.details?.cardName || card.cardName %></h3>
+          <% if (card.details?.manaCost) { %>
+            <p><strong><%= t('deckDetail.mana') %></strong> <%= card.details.manaCost %></p>
+          <% } %>
+          <% if (card.details?.typeLine) { %>
+            <p><%= card.details.typeLine %></p>
+          <% } %>
+          <% if (card.details?.oracleText) { %>
+            <p class="subtle"><%= card.details.oracleText %></p>
+          <% } %>
+          <% if (card.details?.scryfallUri) { %>
+            <p><a href="<%= card.details.scryfallUri %>" target="_blank" rel="noreferrer"><%= t('deckDetail.openScryfall') %></a></p>
+          <% } %>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

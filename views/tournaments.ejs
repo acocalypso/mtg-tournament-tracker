@@ -1,0 +1,39 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('tournaments.title') %></h1>
+  <p><%= t('tournaments.subtitle') %></p>
+</section>
+
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="card">
+  <% if (!tournaments.length) { %>
+    <p><%= t('tournaments.noData') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><%= t('admin.tournamentName') %></th>
+            <th><%= t('admin.date') %></th>
+            <th><%= t('tournaments.entries') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% tournaments.forEach((item) => { %>
+            <tr>
+              <td><a class="table-link" href="/tournaments/<%= item.id %>"><%= item.name %></a></td>
+              <td><%= new Date(item.played_on).toLocaleDateString() %></td>
+              <td><%= item.entries %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

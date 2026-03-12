@@ -1,0 +1,55 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('leaderboard.title') %></h1>
+  <p><%= t('leaderboard.subtitle') %></p>
+</section>
+
+<section class="card">
+  <% if (!leaderboard.length) { %>
+    <p><%= t('leaderboard.noData') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><%= t('common.player') %></th>
+            <th><%= t('leaderboard.decksPlayed') %></th>
+            <th><%= t('common.wld') %></th>
+            <th><%= t('common.points') %></th>
+            <th><%= t('common.winPct') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% leaderboard.forEach((row, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= row.player_name %></td>
+              <td>
+                <% if (!row.decks || !row.decks.length) { %>
+                  -
+                <% } else { %>
+                  <% row.decks.forEach((deck, deckIndex) => { %>
+                    <% if (deck.decklistId) { %>
+                      <a class="table-link" href="/decklists/<%= deck.decklistId %>"><%= deck.name %></a>
+                    <% } else { %>
+                      <%= deck.name %>
+                    <% } %>
+                    <% if (deckIndex < row.decks.length - 1) { %>, <% } %>
+                  <% }) %>
+                <% } %>
+                <div class="subtle"><%= row.deck_count || 0 %> <%= t('leaderboard.deckCount') %></div>
+              </td>
+              <td><%= row.wins %>-<%= row.losses %>-<%= row.draws %></td>
+              <td><strong><%= row.points %></strong></td>
+              <td><%= row.win_rate ?? 0 %>%</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

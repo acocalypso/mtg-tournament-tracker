@@ -1,0 +1,44 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.newsLatest') %></h1>
+  <p><%= t('admin.newsManageHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "news-list", canManageUsers }) %>
+
+<section class="card">
+  <p><a class="table-link" href="/admin/news/new"><%= t('admin.navCreateNews') %></a></p>
+  <% if (!newsArticles || !newsArticles.length) { %>
+    <p><%= t('admin.newsNone') %></p>
+  <% } else { %>
+    <ul class="simple-list">
+      <% newsArticles.forEach((article) => { %>
+        <li>
+          <strong><%= article.title %></strong>
+          <span class="subtle">
+            - <%= article.article_type === 'footer_page' ? t('admin.articleTypeFooterPage') : t('admin.articleTypeNews') %>
+            <% if (article.page_slug) { %>
+              - /pages/<%= article.page_slug %>
+            <% } %>
+            - <%= article.is_published ? t('admin.newsPublished') : t('admin.newsDraft') %>
+            - <%= new Date(article.published_at).toLocaleString() %>
+            <% if (article.author_username) { %>
+              - <%= article.author_username %>
+            <% } %>
+            - <a class="table-link" href="/admin/news/<%= article.id %>/edit"><%= t('admin.newsEdit') %></a>
+          </span>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

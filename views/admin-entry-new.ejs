@@ -1,0 +1,119 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.addEntry') %></h1>
+  <p><%= t('admin.entriesPageHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "entry-new", canManageUsers }) %>
+
+<section class="card">
+  <form method="post" action="/admin/entries" class="stack-form">
+    <label>
+      <%= t('admin.tournament') %>
+      <select name="tournament_id" required>
+        <option value=""><%= t('admin.selectTournament') %></option>
+        <% tournaments.forEach((item) => { %>
+          <option value="<%= item.id %>">
+            <%= item.name %> (<%= new Date(item.played_on).toLocaleDateString() %>)
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      <%= t('admin.registeredUserOptional') %>
+      <select name="user_id" id="entry-user-id">
+        <option value=""><%= t('admin.noRegisteredUser') %></option>
+        <% users.forEach((user) => { %>
+          <option value="<%= user.id %>">
+            <%= user.username %> <% if (user.companion_username) { %>- <%= user.companion_username %><% } %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      <%= t('admin.savedDecklistOptional') %>
+      <select name="decklist_id" id="entry-decklist-id">
+        <option value=""><%= t('admin.noSavedDecklist') %></option>
+        <% decklists.forEach((decklist) => { %>
+          <option value="<%= decklist.id %>" data-user-id="<%= decklist.user_id %>">
+            <%= decklist.username %> - <%= decklist.title %> (<%= decklist.format %>)
+          </option>
+        <% }) %>
+      </select>
+      <small class="subtle"><%= t('admin.savedDecklistHint') %></small>
+    </label>
+
+    <label>
+      <%= t('admin.playerName') %>
+      <input type="text" name="player_name" placeholder="<%= t('placeholders.playerName') %>" />
+    </label>
+
+    <label>
+      <%= t('admin.deckFallback') %>
+      <input type="text" name="deck" placeholder="<%= t('placeholders.deckName') %>" />
+    </label>
+
+    <div class="inline-3">
+      <label>
+        <%= t('admin.wins') %>
+        <input type="number" name="wins" min="0" value="0" required />
+      </label>
+      <label>
+        <%= t('admin.losses') %>
+        <input type="number" name="losses" min="0" value="0" required />
+      </label>
+      <label>
+        <%= t('admin.draws') %>
+        <input type="number" name="draws" min="0" value="0" required />
+      </label>
+    </div>
+
+    <button type="submit"><%= t('admin.saveEntry') %></button>
+  </form>
+</section>
+
+<script>
+  (function () {
+    const userSelect = document.getElementById("entry-user-id");
+    const decklistSelect = document.getElementById("entry-decklist-id");
+    if (!userSelect || !decklistSelect) {
+      return;
+    }
+
+    const allOptions = Array.from(decklistSelect.options);
+
+    function filterDecklists() {
+      const selectedUserId = userSelect.value;
+      decklistSelect.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "<%= t('admin.noSavedDecklist') %>";
+      decklistSelect.appendChild(placeholder);
+
+      allOptions
+        .filter((option) => option.value)
+        .forEach((option) => {
+          const ownerId = option.getAttribute("data-user-id");
+          if (!selectedUserId || ownerId === selectedUserId) {
+            decklistSelect.appendChild(option.cloneNode(true));
+          }
+        });
+    }
+
+    userSelect.addEventListener("change", filterDecklists);
+    filterDecklists();
+  })();
+</script>
+
+<%- include("partials/footer") %>

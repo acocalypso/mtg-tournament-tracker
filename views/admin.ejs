@@ -1,0 +1,42 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.title') %></h1>
+  <p><%= t('admin.subtitle') %></p>
+  <p class="subtle"><%= t('admin.signedInAs') %> <strong><%= currentUsername %></strong> (<%= currentUserRole %>)</p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "dashboard", canManageUsers }) %>
+
+<section class="grid">
+  <article class="card">
+    <h2><%= t('admin.quickLinks') %></h2>
+    <ul class="simple-list">
+      <li><a class="table-link" href="/admin/news/new"><%= t('admin.navCreateNews') %></a></li>
+      <li><a class="table-link" href="/admin/entries/new"><%= t('admin.navAddEntry') %></a></li>
+      <li><a class="table-link" href="/admin/tournaments"><%= t('admin.navCreateTournament') %></a></li>
+      <% if (canManageUsers) { %>
+        <li><a class="table-link" href="/admin/users"><%= t('admin.navUserManagement') %></a></li>
+      <% } %>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2><%= t('admin.overview') %></h2>
+    <ul class="simple-list">
+      <li><strong><%= stats.newsArticles %></strong> <%= t('admin.statNewsArticles') %></li>
+      <li><strong><%= stats.tournaments %></strong> <%= t('admin.statTournaments') %></li>
+      <li><strong><%= stats.recentEntries %></strong> <%= t('admin.statRecentEntries') %></li>
+      <li><strong><%= stats.users %></strong> <%= t('admin.statUsers') %></li>
+    </ul>
+  </article>
+</section>
+
+<%- include("partials/footer") %>

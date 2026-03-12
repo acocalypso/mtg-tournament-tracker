@@ -1,0 +1,57 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.navSettings') %></h1>
+  <p><%= t('admin.settingsPageHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "settings", canManageUsers }) %>
+
+<section class="grid">
+  <article class="card">
+    <h2><%= t('admin.websiteSettings') %></h2>
+    <p class="subtle"><%= t('admin.websiteSettingsHint') %></p>
+    <form method="post" action="/admin/settings/site-name" class="stack-form">
+      <label>
+        <%= t('setupConfig.siteName') %>
+        <input
+          type="text"
+          name="site_name"
+          required
+          maxlength="120"
+          value="<%= siteName || '' %>"
+          placeholder="<%= t('placeholders.siteName') %>"
+        />
+      </label>
+      <button type="submit"><%= t('admin.saveWebsiteSettings') %></button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2><%= t('admin.registrationPolicy') %></h2>
+    <p class="subtle"><%= t('admin.registrationPolicyHint') %></p>
+    <form method="post" action="/admin/settings/registration" class="stack-form">
+      <label>
+        <%= t('admin.emailConfirmUsers') %>
+        <select name="registration_email_confirmation_required" required>
+          <option value="0" <%= !emailConfirmationRequired ? "selected" : "" %>>
+            <%= t('admin.disabled') %>
+          </option>
+          <option value="1" <%= emailConfirmationRequired ? "selected" : "" %>>
+            <%= t('admin.enabled') %>
+          </option>
+        </select>
+      </label>
+      <button type="submit"><%= t('admin.savePolicy') %></button>
+    </form>
+  </article>
+</section>
+
+<%- include("partials/footer") %>

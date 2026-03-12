@@ -1,0 +1,54 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.recentEntries') %></h1>
+  <p><%= t('admin.recentEntriesHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "entries", canManageUsers }) %>
+
+<section class="card">
+  <% if (!recentEntries.length) { %>
+    <p><%= t('admin.noEntries') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><%= t('admin.tournament') %></th>
+            <th><%= t('common.player') %></th>
+            <th><%= t('tournamentDetail.linkedUser') %></th>
+            <th><%= t('common.deck') %></th>
+            <th><%= t('common.wld') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% recentEntries.forEach((entry) => { %>
+            <tr>
+              <td><%= entry.tournament_name %></td>
+              <td><%= entry.player_name %></td>
+              <td><%= entry.linked_username || "-" %></td>
+              <td>
+                <% if (entry.decklist_id) { %>
+                  <a class="table-link" href="/decklists/<%= entry.decklist_id %>"><%= entry.deck %></a>
+                <% } else { %>
+                  <%= entry.deck %>
+                <% } %>
+              </td>
+              <td><%= entry.wins %>-<%= entry.losses %>-<%= entry.draws %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

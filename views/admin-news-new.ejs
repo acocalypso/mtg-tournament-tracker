@@ -1,0 +1,101 @@
+<%- include("partials/header", { title }) %>
+
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+
+<section class="hero">
+  <h1><%= t('admin.newsCreate') %></h1>
+  <p><%= t('admin.newsCreateHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "news-new", canManageUsers }) %>
+
+<section class="card">
+  <form id="news-create-form" method="post" action="/admin/news" class="stack-form" enctype="multipart/form-data">
+    <label>
+      <%= t('admin.newsTitle') %>
+      <input type="text" name="title" required maxlength="180" placeholder="<%= t('placeholders.newsTitle') %>" />
+    </label>
+    <label>
+      <%= t('admin.newsContent') %>
+      <div id="news-create-editor" class="quill-editor"></div>
+      <input type="hidden" id="news-create-content-html" name="content_html" />
+    </label>
+    <label>
+      <%= t('admin.newsImage') %>
+      <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif" />
+      <small class="subtle"><%= t('admin.newsImageHint') %></small>
+    </label>
+    <label>
+      <%= t('admin.newsVisibility') %>
+      <select name="is_published" required>
+        <option value="1"><%= t('admin.newsPublished') %></option>
+        <option value="0"><%= t('admin.newsDraft') %></option>
+      </select>
+    </label>
+    <label>
+      <%= t('admin.articleType') %>
+      <select id="article-type" name="article_type" required>
+        <option value="news"><%= t('admin.articleTypeNews') %></option>
+        <option value="footer_page"><%= t('admin.articleTypeFooterPage') %></option>
+      </select>
+    </label>
+    <label id="page-slug-wrapper" class="hidden-field">
+      <%= t('admin.footerSlug') %>
+      <input type="text" name="page_slug" maxlength="180" placeholder="<%= t('placeholders.footerSlug') %>" />
+      <small class="subtle"><%= t('admin.footerSlugHint') %></small>
+    </label>
+    <label>
+      <%= t('admin.newsPublishedAt') %>
+      <input type="datetime-local" name="published_at" />
+    </label>
+    <button type="submit"><%= t('admin.newsSave') %></button>
+  </form>
+</section>
+
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+  (function () {
+    const createForm = document.getElementById("news-create-form");
+    const createEditorEl = document.getElementById("news-create-editor");
+    const createHidden = document.getElementById("news-create-content-html");
+    const articleTypeSelect = document.getElementById("article-type");
+    const slugWrapper = document.getElementById("page-slug-wrapper");
+
+    if (!createForm || !createEditorEl || !createHidden || !window.Quill) {
+      return;
+    }
+
+    const createQuill = new window.Quill(createEditorEl, {
+      theme: "snow",
+      placeholder: "<%= t('placeholders.newsContent') %>",
+      modules: {
+        toolbar: [["bold", "italic", "underline"], [{ header: [2, 3, false] }], [{ list: "ordered" }, { list: "bullet" }], ["link", "blockquote", "code-block"], ["clean"]],
+      },
+    });
+
+    createForm.addEventListener("submit", () => {
+      createHidden.value = createQuill.root.innerHTML;
+    });
+
+    function syncSlugVisibility() {
+      if (!articleTypeSelect || !slugWrapper) {
+        return;
+      }
+      slugWrapper.classList.toggle("hidden-field", articleTypeSelect.value !== "footer_page");
+    }
+
+    if (articleTypeSelect && slugWrapper) {
+      articleTypeSelect.addEventListener("change", syncSlugVisibility);
+      syncSlugVisibility();
+    }
+  })();
+</script>
+
+<%- include("partials/footer") %>

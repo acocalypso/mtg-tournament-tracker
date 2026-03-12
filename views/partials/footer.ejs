@@ -1,0 +1,14 @@
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <% if (footerLinks && footerLinks.length) { %>
+          <nav class="footer-nav" aria-label="<%= t('footer.navLabel') %>">
+            <% footerLinks.forEach((item) => { %>
+              <a href="/pages/<%= encodeURIComponent(item.page_slug) %>"><%= item.title %></a>
+            <% }) %>
+          </nav>
+        <% } %>
+      </div>
+    </footer>
+  </body>
+</html>

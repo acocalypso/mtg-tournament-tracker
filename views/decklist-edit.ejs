@@ -1,0 +1,47 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('deckEdit.title') %></h1>
+  <p><%= t('deckEdit.subtitle') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="card">
+  <form method="post" action="/decklists/<%= decklist.id %>/update" class="stack-form">
+    <label>
+      <%= t('profile.deckTitle') %>
+      <input type="text" name="title" required maxlength="160" value="<%= decklist.title %>" />
+    </label>
+
+    <label>
+      <%= t('setupConfig.defaultFormat') %>
+      <select name="format" required>
+        <% formats.forEach((item) => { %>
+          <option value="<%= item.format_name %>" <%= decklist.format === item.format_name ? "selected" : "" %>>
+            <%= item.format_name %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      <%= t('deckEdit.mainDecklist') %>
+      <textarea name="raw_list" required rows="12"><%= decklist.raw_list %></textarea>
+    </label>
+
+    <label>
+      <%= t('deckEdit.sideboard') %>
+      <textarea name="raw_sideboard" rows="8"><%= decklist.raw_sideboard || "" %></textarea>
+    </label>
+
+    <button type="submit"><%= t('deckEdit.save') %></button>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

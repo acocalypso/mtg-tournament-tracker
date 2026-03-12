@@ -1,0 +1,69 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('setupConfig.title') %></h1>
+  <p><%= t('setupConfig.subtitle') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="card auth-card">
+  <h2><%= t('setupConfig.core') %></h2>
+  <form method="post" action="/setup/config" class="stack-form">
+    <label>
+      <%= t('setupConfig.siteName') %>
+      <input
+        type="text"
+        name="site_name"
+        value="<%= values.site_name %>"
+        required
+        maxlength="120"
+        placeholder="<%= t('placeholders.siteName') %>"
+      />
+    </label>
+
+    <label>
+      <%= t('setupConfig.defaultFormat') %>
+      <select name="default_format" required>
+        <% ["Standard", "Pioneer", "Modern", "Legacy", "Vintage", "Commander", "Pauper", "Other"].forEach((format) => { %>
+          <option value="<%= format %>" <%= values.default_format === format ? "selected" : "" %>>
+            <%= format %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      <%= t('setupConfig.timezone') %>
+      <input
+        type="text"
+        name="timezone"
+        value="<%= values.timezone %>"
+        required
+        maxlength="80"
+        placeholder="<%= t('placeholders.timezone') %>"
+      />
+    </label>
+
+    <label>
+      <%= t('setupConfig.emailConfirm') %>
+      <select name="registration_email_confirmation_required" required>
+        <option value="0" <%= values.registration_email_confirmation_required === "0" ? "selected" : "" %>>
+          <%= t('setupConfig.emailConfirmNo') %>
+        </option>
+        <option value="1" <%= values.registration_email_confirmation_required === "1" ? "selected" : "" %>>
+          <%= t('setupConfig.emailConfirmYes') %>
+        </option>
+      </select>
+    </label>
+
+    <button type="submit"><%= t('setupConfig.finish') %></button>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

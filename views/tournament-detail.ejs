@@ -1,0 +1,87 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= tournament.name %></h1>
+  <p>
+    <%= t('tournamentDetail.date') %>: <strong><%= new Date(tournament.played_on).toLocaleDateString() %></strong> |
+    <%= t('tournamentDetail.participants') %>: <strong><%= participants.length %></strong>
+  </p>
+</section>
+
+<section class="card">
+  <h2><%= t('tournamentDetail.participantStandings') %></h2>
+  <% if (!participants.length) { %>
+    <p><%= t('tournamentDetail.noParticipants') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th><%= t('common.player') %></th>
+            <th><%= t('tournamentDetail.linkedUser') %></th>
+            <th><%= t('common.deck') %></th>
+            <th><%= t('common.wld') %></th>
+            <th><%= t('common.points') %></th>
+            <th><%= t('common.winPct') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% participants.forEach((entry, index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= entry.player_name %></td>
+              <td><%= entry.linked_username || "-" %></td>
+              <td>
+                <% if (entry.decklist_id) { %>
+                  <a class="table-link" href="/decklists/<%= entry.decklist_id %>"><%= entry.deck %></a>
+                <% } else { %>
+                  <%= entry.deck %>
+                <% } %>
+              </td>
+              <td><%= entry.wins %>-<%= entry.losses %>-<%= entry.draws %></td>
+              <td><strong><%= entry.points %></strong></td>
+              <td><%= entry.win_rate ?? 0 %>%</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2><%= t('tournamentDetail.deckBreakdown') %></h2>
+  <% if (!deckStats.length) { %>
+    <p><%= t('tournamentDetail.noDeckStats') %></p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th><%= t('common.deck') %></th>
+            <th><%= t('meta.pilots') %></th>
+            <th><%= t('common.wld') %></th>
+            <th><%= t('common.points') %></th>
+            <th><%= t('common.winPct') %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% deckStats.forEach((row) => { %>
+            <tr>
+              <td><%= row.deck %></td>
+              <td><%= row.pilots %></td>
+              <td><%= row.wins %>-<%= row.losses %>-<%= row.draws %></td>
+              <td><strong><%= row.points %></strong></td>
+              <td><%= row.win_rate ?? 0 %>%</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<p><a class="table-link" href="/tournaments"><%= t('tournamentDetail.back') %></a></p>
+
+<%- include("partials/footer") %>

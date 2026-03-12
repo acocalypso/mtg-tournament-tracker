@@ -1,0 +1,47 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('setup.title') %></h1>
+  <p><%= t('setup.subtitle') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="card auth-card">
+  <h2><%= t('setup.createAdmin') %></h2>
+  <form method="post" action="/setup" class="stack-form">
+    <label>
+      <%= t('labels.username') %>
+      <input
+        type="text"
+        name="username"
+        required
+        minlength="3"
+        maxlength="80"
+        placeholder="<%= t('placeholders.admin') %>"
+      />
+    </label>
+    <label>
+      <%= t('labels.password') %>
+      <input
+        type="password"
+        name="password"
+        required
+        minlength="10"
+        placeholder="<%= t('placeholders.passwordMin') %>"
+      />
+    </label>
+    <label>
+      <%= t('labels.confirmPassword') %>
+      <input type="password" name="confirm_password" required minlength="10" />
+    </label>
+    <button type="submit"><%= t('setup.createAdminBtn') %></button>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

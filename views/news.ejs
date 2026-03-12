@@ -1,0 +1,36 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('news.title') %></h1>
+  <p><%= t('news.subtitle') %></p>
+</section>
+
+<% if (queryError) { %>
+  <p class="flash error"><%= queryError %></p>
+<% } %>
+
+<section class="news-list">
+  <% if (!articles.length) { %>
+    <article class="card">
+      <p><%= t('news.noArticles') %></p>
+    </article>
+  <% } else { %>
+    <% articles.forEach((article) => { %>
+      <article class="card">
+        <h2><%= article.title %></h2>
+        <p class="subtle">
+          <%= new Date(article.published_at).toLocaleString() %>
+          <% if (article.author_username) { %>
+            - <%= article.author_username %>
+          <% } %>
+        </p>
+        <% if (article.image_url) { %>
+          <img class="news-image" src="<%= article.image_url %>" alt="<%= article.title %>" loading="lazy" />
+        <% } %>
+        <div class="news-content"><%- article.content %></div>
+      </article>
+    <% }) %>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

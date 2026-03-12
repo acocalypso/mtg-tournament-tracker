@@ -1,0 +1,111 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('profile.title') %></h1>
+  <p><%= t('profile.subtitle') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<section class="grid">
+  <article class="card">
+    <h2><%= t('profile.companionProfile') %></h2>
+    <form method="post" action="/profile" class="stack-form">
+      <label>
+        <%= t('profile.appName') %>
+        <select name="companion_app_name" required>
+          <% companionApps.forEach((appItem) => { %>
+            <option value="<%= appItem.app_name %>" <%= user.companion_app_name === appItem.app_name ? "selected" : "" %>>
+              <%= appItem.app_name %>
+            </option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('profile.companionUsername') %>
+        <input
+          type="text"
+          name="companion_username"
+          value="<%= user.companion_username || "" %>"
+          placeholder="<%= t('profile.usernamePlaceholder') %>"
+          maxlength="120"
+        />
+      </label>
+      <button type="submit"><%= t('profile.saveProfile') %></button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2><%= t('profile.history') %></h2>
+    <% if (!history.length) { %>
+      <p><%= t('profile.noHistory') %></p>
+    <% } else { %>
+      <ul class="simple-list">
+        <% history.forEach((item) => { %>
+          <li>
+            <strong><%= item.companion_username %></strong>
+            <span class="subtle">- <%= new Date(item.created_at).toLocaleString() %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </article>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2><%= t('profile.addDeck') %></h2>
+    <form method="post" action="/decklists" class="stack-form">
+      <label>
+        <%= t('profile.deckTitle') %>
+        <input type="text" name="title" required maxlength="160" placeholder="<%= t('placeholders.deckTitle') %>" />
+      </label>
+      <label>
+        <%= t('setupConfig.defaultFormat') %>
+        <select name="format" required>
+          <% formats.forEach((item) => { %>
+            <option value="<%= item.format_name %>"><%= item.format_name %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>
+        <%= t('profile.decklist') %>
+        <textarea name="raw_list" required rows="10" placeholder="<%= t('placeholders.deckLine') %>"></textarea>
+      </label>
+      <label>
+        <%= t('profile.sideboardOptional') %>
+        <textarea name="raw_sideboard" rows="6" placeholder="<%= t('placeholders.sideboardLine') %>"></textarea>
+      </label>
+      <button type="submit"><%= t('profile.saveDeck') %></button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2><%= t('profile.yourDecks') %></h2>
+    <% if (!decklists.length) { %>
+      <p><%= t('profile.noDecks') %></p>
+    <% } else { %>
+      <ul class="simple-list">
+        <% decklists.forEach((deck) => { %>
+          <li>
+            <a href="/decklists/<%= deck.id %>"><strong><%= deck.title %></strong></a>
+            <span class="subtle">(<%= deck.format %>)</span>
+            <span class="subtle">
+              - <a href="/decklists/<%= deck.id %>/edit"><%= t('profile.edit') %></a>
+            </span>
+            <form method="post" action="/decklists/<%= deck.id %>/delete" class="inline-form">
+              <button type="submit" class="danger-btn"><%= t('profile.delete') %></button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </article>
+</section>
+
+<%- include("partials/footer") %>

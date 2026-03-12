@@ -1,0 +1,50 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.createTournament') %></h1>
+  <p><%= t('admin.tournamentPageHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "tournaments", canManageUsers }) %>
+
+<section class="grid">
+  <article class="card">
+    <h2><%= t('admin.createTournament') %></h2>
+    <form method="post" action="/admin/tournaments" class="stack-form">
+      <label>
+        <%= t('admin.tournamentName') %>
+        <input type="text" name="name" required placeholder="<%= t('placeholders.tournamentName') %>" />
+      </label>
+      <label>
+        <%= t('admin.date') %>
+        <input type="date" name="played_on" required />
+      </label>
+      <button type="submit"><%= t('admin.saveTournament') %></button>
+    </form>
+  </article>
+
+  <article class="card">
+    <h2><%= t('tournaments.title') %></h2>
+    <% if (!tournaments.length) { %>
+      <p><%= t('tournaments.noData') %></p>
+    <% } else { %>
+      <ul class="simple-list">
+        <% tournaments.forEach((item) => { %>
+          <li>
+            <strong><%= item.name %></strong>
+            <span class="subtle">- <%= new Date(item.played_on).toLocaleDateString() %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </article>
+</section>
+
+<%- include("partials/footer") %>
