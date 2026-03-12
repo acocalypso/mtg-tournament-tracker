@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %> | <%= siteName || t('app.title') %></title>
+    <script>
+      (function () {
+        try {
+          const saved = localStorage.getItem("theme");
+          const prefersDark =
+            typeof window.matchMedia === "function" &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const theme = saved === "dark" || saved === "light" ? saved : (prefersDark ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (_error) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -63,6 +77,58 @@
             </button>
           </form>
         </div>
+        <button
+          type="button"
+          id="theme-toggle"
+          class="nav-theme-btn"
+          aria-label="<%= t('theme.label') %>"
+          title="<%= t('theme.label') %>"
+          data-theme-base-label="<%= t('theme.label') %>"
+          data-label-light="<%= t('theme.light') %>"
+          data-label-dark="<%= t('theme.dark') %>"
+          data-icon-light="☀"
+          data-icon-dark="◐"
+        ></button>
       </nav>
     </header>
+    <script>
+      (function () {
+        const themeToggle = document.getElementById("theme-toggle");
+        if (!themeToggle) {
+          return;
+        }
+
+        function getCurrentTheme() {
+          const current = document.documentElement.getAttribute("data-theme");
+          return current === "dark" ? "dark" : "light";
+        }
+
+        function renderThemeButton(theme) {
+          const icon = theme === "dark" ? themeToggle.dataset.iconDark : themeToggle.dataset.iconLight;
+          const label = theme === "dark" ? themeToggle.dataset.labelDark : themeToggle.dataset.labelLight;
+          const baseLabel = themeToggle.dataset.themeBaseLabel || "Theme";
+          themeToggle.textContent = icon || "☀";
+          themeToggle.setAttribute("aria-label", `${baseLabel}: ${label}`);
+          themeToggle.setAttribute("title", `${baseLabel}: ${label}`);
+          themeToggle.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+        }
+
+        function applyTheme(theme) {
+          document.documentElement.setAttribute("data-theme", theme);
+          renderThemeButton(theme);
+          try {
+            localStorage.setItem("theme", theme);
+          } catch (_error) {
+            // Ignore storage failures.
+          }
+        }
+
+        renderThemeButton(getCurrentTheme());
+
+        themeToggle.addEventListener("click", function () {
+          const nextTheme = getCurrentTheme() === "dark" ? "light" : "dark";
+          applyTheme(nextTheme);
+        });
+      })();
+    </script>
     <main class="page-shell">
