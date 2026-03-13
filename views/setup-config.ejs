@@ -52,6 +52,14 @@
     </label>
 
     <label>
+      <%= t('setupConfig.defaultLocale') %>
+      <select name="default_locale" required>
+        <option value="en" <%= values.default_locale === "en" ? "selected" : "" %>><%= t('setupConfig.localeEn') %></option>
+        <option value="de" <%= values.default_locale === "de" ? "selected" : "" %>><%= t('setupConfig.localeDe') %></option>
+      </select>
+    </label>
+
+    <label>
       <%= t('setupConfig.emailConfirm') %>
       <select name="registration_email_confirmation_required" required>
         <option value="0" <%= values.registration_email_confirmation_required === "0" ? "selected" : "" %>>

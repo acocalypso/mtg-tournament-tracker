@@ -8,6 +8,42 @@
             <% }) %>
           </nav>
         <% } %>
+
+        <% if (consentBanner && consentBanner.enabled && consentBanner.shouldShow) { %>
+          <section class="consent-banner" aria-label="<%= t('consent.title') %>">
+            <h3><%= t('consent.title') %></h3>
+            <p><%= consentBanner.bannerText %></p>
+            <details>
+              <summary><%= t('consent.more') %></summary>
+              <p><%= consentBanner.detailsText %></p>
+              <p><a class="table-link" href="<%= consentBanner.privacyUrl %>"><%= t('consent.privacyLink') %></a></p>
+            </details>
+
+            <div class="consent-actions">
+              <form method="post" action="/consent/save" class="inline-form">
+                <%- include("csrf") %>
+                <input type="hidden" name="return_to" value="<%= consentBanner.returnTo %>" />
+                <input type="hidden" name="action" value="essential_only" />
+                <button type="submit"><%= t('consent.onlyEssential') %></button>
+              </form>
+              <form method="post" action="/consent/save" class="inline-form">
+                <%- include("csrf") %>
+                <input type="hidden" name="return_to" value="<%= consentBanner.returnTo %>" />
+                <input type="hidden" name="action" value="accept_all" />
+                <button type="submit"><%= t('consent.acceptAll') %></button>
+              </form>
+            </div>
+
+            <form method="post" action="/consent/save" class="stack-form consent-custom-form">
+              <%- include("csrf") %>
+              <input type="hidden" name="return_to" value="<%= consentBanner.returnTo %>" />
+              <input type="hidden" name="action" value="custom" />
+              <label class="consent-check"><input type="checkbox" name="analytics" value="1" /> <span><%= t('consent.analytics') %></span></label>
+              <label class="consent-check"><input type="checkbox" name="marketing" value="1" /> <span><%= t('consent.marketing') %></span></label>
+              <button type="submit"><%= t('consent.saveSelection') %></button>
+            </form>
+          </section>
+        <% } %>
       </div>
     </footer>
   </body>

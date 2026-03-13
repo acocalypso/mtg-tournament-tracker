@@ -119,6 +119,8 @@ function createSetupAuthRouter({
       const siteName = String(req.body.site_name || "").trim();
       const defaultFormat = String(req.body.default_format || "").trim();
       const timezone = String(req.body.timezone || "").trim();
+      const defaultLocaleRaw = String(req.body.default_locale || "en").trim().toLowerCase();
+      const defaultLocale = ["en", "de"].includes(defaultLocaleRaw) ? defaultLocaleRaw : "en";
       const registrationEmailConfirmationRequired =
         String(req.body.registration_email_confirmation_required || "0") === "1" ? "1" : "0";
 
@@ -130,6 +132,7 @@ function createSetupAuthRouter({
         site_name: siteName,
         default_format: defaultFormat,
         timezone,
+        default_locale: defaultLocale,
         registration_email_confirmation_required: registrationEmailConfirmationRequired,
       });
 

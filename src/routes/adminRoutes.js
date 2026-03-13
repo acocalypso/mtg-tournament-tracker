@@ -13,6 +13,8 @@ function createAdminRouter({
   isEmailConfirmationRequired,
   getSetupValues,
   getLeaderboardMinEvents,
+  getConsentSettings,
+  updateConsentSettings,
   verifyCsrfTokenStrict,
 }) {
   const router = express.Router();
@@ -219,11 +221,25 @@ function createAdminRouter({
     const setupValues = typeof getSetupValues === "function" ? await getSetupValues() : { site_name: "" };
     const leaderboardMinEvents =
       typeof getLeaderboardMinEvents === "function" ? await getLeaderboardMinEvents() : 1;
+    const consentSettings =
+      typeof getConsentSettings === "function"
+        ? await getConsentSettings()
+        : {
+            enabled: "0",
+            policyVersion: "1",
+            bannerTextEn: "",
+            bannerTextDe: "",
+            detailsEn: "",
+            detailsDe: "",
+            privacyUrlEn: "/pages/privacy-policy",
+            privacyUrlDe: "/pages/datenschutz",
+          };
     return {
       companionApps,
       emailConfirmationRequired,
       siteName: String(setupValues.site_name || "").trim(),
       leaderboardMinEvents,
+      consentSettings,
     };
   }
 
@@ -848,13 +864,14 @@ function createAdminRouter({
 
   router.get("/admin/settings", requireRole("admin"), async (req, res, next) => {
     try {
-      const { emailConfirmationRequired, siteName, leaderboardMinEvents } = await loadAdminSettingsData();
+      const { emailConfirmationRequired, siteName, leaderboardMinEvents, consentSettings } = await loadAdminSettingsData();
 
       return res.render("admin-settings", {
         title: req.__("admin.navSettings"),
         emailConfirmationRequired,
         siteName,
         leaderboardMinEvents,
+        consentSettings,
         canManageUsers: true,
         message: res.locals.queryMessage,
         error: res.locals.queryError,
@@ -898,6 +915,36 @@ function createAdminRouter({
 
       await adminRepository.updateLeaderboardMinEventsSetting(minEvents);
       return res.redirect("/admin/settings?message_key=flash.admin.leaderboardMinEventsUpdated");
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/admin/settings/consent", requireRole("admin"), async (req, res, next) => {
+    try {
+      const enabled = String(req.body.consent_banner_enabled || "0") === "1" ? "1" : "0";
+      const policyVersionRaw = String(req.body.consent_policy_version || "1").trim();
+      const policyVersion = /^\d{1,5}$/.test(policyVersionRaw) ? policyVersionRaw : "1";
+
+      const bannerTextEn = sanitizePlainText(req.body.consent_banner_text_en || "");
+      const bannerTextDe = sanitizePlainText(req.body.consent_banner_text_de || "");
+      const detailsEn = sanitizePlainText(req.body.consent_details_en || "");
+      const detailsDe = sanitizePlainText(req.body.consent_details_de || "");
+      const privacyUrlEn = sanitizePlainText(req.body.consent_privacy_url_en || "/pages/privacy-policy");
+      const privacyUrlDe = sanitizePlainText(req.body.consent_privacy_url_de || "/pages/datenschutz");
+
+      await updateConsentSettings({
+        consent_banner_enabled: enabled,
+        consent_policy_version: policyVersion,
+        consent_banner_text_en: bannerTextEn,
+        consent_banner_text_de: bannerTextDe,
+        consent_details_en: detailsEn,
+        consent_details_de: detailsDe,
+        consent_privacy_url_en: privacyUrlEn,
+        consent_privacy_url_de: privacyUrlDe,
+      });
+
+      return res.redirect("/admin/settings?message_key=flash.admin.consentSettingsUpdated");
     } catch (error) {
       return next(error);
     }

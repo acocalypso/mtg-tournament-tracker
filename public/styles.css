@@ -589,6 +589,45 @@ button:hover {
   text-decoration: underline;
 }
 
+.consent-banner {
+  margin-top: 0.8rem;
+  background: var(--control-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.consent-banner h3 {
+  margin: 0;
+  font-family: "IBM Plex Serif Local", "Georgia", "Times New Roman", serif;
+}
+
+.consent-banner p {
+  margin: 0;
+}
+
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.consent-custom-form {
+  gap: 0.4rem;
+}
+
+.consent-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.consent-check input {
+  width: auto;
+}
+
 .meta-panel {
   background: var(--card);
   border: 1px solid var(--line);

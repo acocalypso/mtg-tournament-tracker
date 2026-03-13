@@ -83,8 +83,11 @@ function createApp(options = {}) {
     isSetupComplete,
     isEmailConfirmationRequired,
     getSetupValues,
+    getDefaultLocale,
     getSiteName,
     getLeaderboardMinEvents,
+    getConsentSettings,
+    updateConsentSettings,
   } = settingsService;
 
   const { isValidEmail, buildTokenHash, sendVerificationEmail } = emailService;
@@ -142,11 +145,99 @@ function createApp(options = {}) {
   app.use("/register", createPostRateLimiter(5));
   app.use("/admin/login", createPostRateLimiter(5));
 
-  app.use((req, res, next) => {
-    if (req.session?.locale) {
-      req.setLocale(req.session.locale);
+  function parseCookies(cookieHeader) {
+    const cookies = {};
+    const raw = String(cookieHeader || "");
+    if (!raw) {
+      return cookies;
     }
-    next();
+
+    const parts = raw.split(";");
+    for (const part of parts) {
+      const [name, ...valueParts] = part.trim().split("=");
+      if (!name) {
+        continue;
+      }
+      cookies[name] = decodeURIComponent(valueParts.join("=") || "");
+    }
+
+    return cookies;
+  }
+
+  app.use(async (req, res, next) => {
+    try {
+      const validLocales = ["en", "de"];
+      const sessionLocale = String(req.session?.locale || "").trim().toLowerCase();
+      if (validLocales.includes(sessionLocale)) {
+        req.setLocale(sessionLocale);
+        return next();
+      }
+
+      const cookies = parseCookies(req.headers?.cookie);
+      const cookieLocale = String(cookies.locale || "").trim().toLowerCase();
+      if (validLocales.includes(cookieLocale)) {
+        req.setLocale(cookieLocale);
+        if (req.session) {
+          req.session.locale = cookieLocale;
+        }
+        return next();
+      }
+
+      if (typeof getDefaultLocale === "function") {
+        const defaultLocale = await getDefaultLocale();
+        if (validLocales.includes(defaultLocale)) {
+          req.setLocale(defaultLocale);
+          if (req.session) {
+            req.session.locale = defaultLocale;
+          }
+          return next();
+        }
+      }
+
+      req.setLocale("en");
+      return next();
+    } catch (_error) {
+      req.setLocale("en");
+      return next();
+    }
+  });
+
+  app.use(async (req, res, next) => {
+    try {
+      const consentSettings = typeof getConsentSettings === "function" ? await getConsentSettings() : null;
+      if (!consentSettings || String(consentSettings.enabled) !== "1") {
+        res.locals.consentBanner = { enabled: false, shouldShow: false };
+        return next();
+      }
+
+      const cookies = parseCookies(req.headers?.cookie);
+      let consentCookie = null;
+      try {
+        consentCookie = cookies.consent_preferences ? JSON.parse(String(cookies.consent_preferences)) : null;
+      } catch (_error) {
+        consentCookie = null;
+      }
+
+      const currentVersion = String(consentSettings.policyVersion || "1");
+      const acceptedVersion = String(consentCookie?.version || "");
+      const shouldShow = acceptedVersion !== currentVersion;
+      const locale = String(req.getLocale() || "en").toLowerCase() === "de" ? "de" : "en";
+
+      res.locals.consentBanner = {
+        enabled: true,
+        shouldShow,
+        policyVersion: currentVersion,
+        locale,
+        bannerText: locale === "de" ? consentSettings.bannerTextDe : consentSettings.bannerTextEn,
+        detailsText: locale === "de" ? consentSettings.detailsDe : consentSettings.detailsEn,
+        privacyUrl: locale === "de" ? consentSettings.privacyUrlDe : consentSettings.privacyUrlEn,
+        returnTo: req.originalUrl || "/",
+      };
+      return next();
+    } catch (_error) {
+      res.locals.consentBanner = { enabled: false, shouldShow: false };
+      return next();
+    }
   });
 
   app.use(csrfProtection.attachToken);
@@ -185,6 +276,12 @@ function createApp(options = {}) {
     if (["en", "de"].includes(locale)) {
       req.setLocale(locale);
       req.session.locale = locale;
+      res.cookie("locale", locale, {
+        httpOnly: false,
+        secure: config.isProd,
+        sameSite: "lax",
+        maxAge: 1000 * 60 * 60 * 24 * 365,
+      });
     }
 
     return res.redirect(returnTo);
@@ -257,7 +354,7 @@ function createApp(options = {}) {
     })
   );
 
-  app.use(createPublicRouter({ publicRepository, getLeaderboardMinEvents }));
+  app.use(createPublicRouter({ publicRepository, getLeaderboardMinEvents, getConsentSettings }));
 
   app.use(
     createAdminRouter({
@@ -268,6 +365,8 @@ function createApp(options = {}) {
       isEmailConfirmationRequired,
       getSetupValues,
       getLeaderboardMinEvents,
+      getConsentSettings,
+      updateConsentSettings,
       verifyCsrfTokenStrict: csrfProtection.verifyTokenStrict,
     })
   );

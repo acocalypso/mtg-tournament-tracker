@@ -1,7 +1,46 @@
 const express = require("express");
 
-function createPublicRouter({ publicRepository, getLeaderboardMinEvents }) {
+function createPublicRouter({ publicRepository, getLeaderboardMinEvents, getConsentSettings }) {
   const router = express.Router();
+
+  router.post("/consent/save", async (req, res, next) => {
+    try {
+      const action = String(req.body.action || "").trim();
+      const returnTo = String(req.body.return_to || "/").trim() || "/";
+      const consentSettings = typeof getConsentSettings === "function" ? await getConsentSettings() : null;
+      const policyVersion = String(consentSettings?.policyVersion || "1");
+
+      let analytics = false;
+      let marketing = false;
+
+      if (action === "accept_all") {
+        analytics = true;
+        marketing = true;
+      } else if (action === "custom") {
+        analytics = String(req.body.analytics || "0") === "1";
+        marketing = String(req.body.marketing || "0") === "1";
+      }
+
+      const payload = {
+        version: policyVersion,
+        ts: new Date().toISOString(),
+        necessary: true,
+        analytics,
+        marketing,
+      };
+
+      res.cookie("consent_preferences", JSON.stringify(payload), {
+        httpOnly: false,
+        secure: req.secure,
+        sameSite: "lax",
+        maxAge: 1000 * 60 * 60 * 24 * 180,
+      });
+
+      return res.redirect(returnTo);
+    } catch (error) {
+      return next(error);
+    }
+  });
 
   router.get("/news", async (req, res, next) => {
     try {

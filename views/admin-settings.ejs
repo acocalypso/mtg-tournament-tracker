@@ -74,6 +74,58 @@
       <button type="submit"><%= t('admin.saveLeaderboardSettings') %></button>
     </form>
   </article>
+
+  <article class="card">
+    <h2><%= t('admin.consentSettings') %></h2>
+    <p class="subtle"><%= t('admin.consentSettingsHint') %></p>
+    <form method="post" action="/admin/settings/consent" class="stack-form">
+      <%- include("partials/csrf") %>
+      <label>
+        <%= t('admin.consentEnabled') %>
+        <select name="consent_banner_enabled" required>
+          <option value="0" <%= String(consentSettings?.enabled || '0') === '0' ? 'selected' : '' %>><%= t('admin.disabled') %></option>
+          <option value="1" <%= String(consentSettings?.enabled || '0') === '1' ? 'selected' : '' %>><%= t('admin.enabled') %></option>
+        </select>
+      </label>
+
+      <label>
+        <%= t('admin.consentPolicyVersion') %>
+        <input type="number" name="consent_policy_version" min="1" step="1" required value="<%= consentSettings?.policyVersion || '1' %>" />
+      </label>
+
+      <label>
+        <%= t('admin.consentBannerTextEn') %>
+        <textarea name="consent_banner_text_en" rows="3" required><%= consentSettings?.bannerTextEn || '' %></textarea>
+      </label>
+
+      <label>
+        <%= t('admin.consentBannerTextDe') %>
+        <textarea name="consent_banner_text_de" rows="3" required><%= consentSettings?.bannerTextDe || '' %></textarea>
+      </label>
+
+      <label>
+        <%= t('admin.consentDetailsEn') %>
+        <textarea name="consent_details_en" rows="5" required><%= consentSettings?.detailsEn || '' %></textarea>
+      </label>
+
+      <label>
+        <%= t('admin.consentDetailsDe') %>
+        <textarea name="consent_details_de" rows="5" required><%= consentSettings?.detailsDe || '' %></textarea>
+      </label>
+
+      <label>
+        <%= t('admin.consentPrivacyUrlEn') %>
+        <input type="text" name="consent_privacy_url_en" maxlength="255" required value="<%= consentSettings?.privacyUrlEn || '/pages/privacy-policy' %>" />
+      </label>
+
+      <label>
+        <%= t('admin.consentPrivacyUrlDe') %>
+        <input type="text" name="consent_privacy_url_de" maxlength="255" required value="<%= consentSettings?.privacyUrlDe || '/pages/datenschutz' %>" />
+      </label>
+
+      <button type="submit"><%= t('admin.saveConsentSettings') %></button>
+    </form>
+  </article>
 </section>
 
 <%- include("partials/footer") %>
