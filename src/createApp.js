@@ -371,6 +371,12 @@ function createApp(options = {}) {
     })
   );
 
+  app.use((req, res) => {
+    return res.status(404).render("404", {
+      title: req.__("error.notFoundTitle"),
+    });
+  });
+
   app.use((error, req, res, next) => {
     console.error(error);
 

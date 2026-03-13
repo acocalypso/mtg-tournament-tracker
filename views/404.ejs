@@ -1,0 +1,12 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('error.notFoundTitle') %></h1>
+  <p><%= t('error.notFoundMessage') %></p>
+</section>
+
+<section class="card auth-card">
+  <p><a class="table-link" href="/"><%= t('error.notFoundBackHome') %></a></p>
+</section>
+
+<%- include("partials/footer") %>
