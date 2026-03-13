@@ -105,6 +105,24 @@ function createAdminRepository({ pool }) {
     return Number(result.affectedRows || 0);
   }
 
+  async function findTournamentById(tournamentId) {
+    const [rows] = await pool.query(
+      `
+      SELECT
+        t.id,
+        t.name,
+        t.played_on,
+        (SELECT COUNT(*) FROM entries e WHERE e.tournament_id = t.id) AS entries_count
+      FROM tournaments t
+      WHERE t.id = ?
+      LIMIT 1
+      `,
+      [tournamentId]
+    );
+
+    return rows[0] || null;
+  }
+
   async function findUserBasicById(userId) {
     const [rows] = await pool.query(
       "SELECT id, username, companion_username FROM users WHERE id = ?",
@@ -297,6 +315,7 @@ function createAdminRepository({ pool }) {
     createTournament,
     updateTournament,
     deleteTournament,
+    findTournamentById,
     findUserBasicById,
     findAliasUserId,
     findDecklistById,

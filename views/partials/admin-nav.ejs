@@ -13,6 +13,7 @@
     <div class="admin-nav-group">
       <h3><%= t('admin.groupEvents') %></h3>
       <a class="<%= active === 'tournaments' ? 'is-active' : '' %>" href="/admin/tournaments"><%= t('admin.navCreateTournament') %></a>
+      <a class="<%= active === 'tournaments-manage' ? 'is-active' : '' %>" href="/admin/tournaments/manage"><%= t('admin.navManageTournaments') %></a>
       <a class="<%= active === 'entry-new' ? 'is-active' : '' %>" href="/admin/entries/new"><%= t('admin.navAddEntry') %></a>
       <a class="<%= active === 'entries' ? 'is-active' : '' %>" href="/admin/entries"><%= t('admin.navRecentEntries') %></a>
     </div>

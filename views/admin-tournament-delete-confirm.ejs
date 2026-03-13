@@ -1,0 +1,36 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.deleteTournament') %></h1>
+  <p><%= t('admin.deleteTournamentStep2Hint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "tournaments-manage", canManageUsers }) %>
+
+<section class="card">
+  <p><strong><%= t('admin.tournamentName') %>:</strong> <%= tournament.name %></p>
+  <p><strong><%= t('admin.date') %>:</strong> <%= new Date(tournament.played_on).toLocaleDateString() %></p>
+  <p><strong><%= t('admin.entriesToDelete') %>:</strong> <%= Number(tournament.entries_count || 0) %></p>
+  <p class="subtle"><%= t('admin.deleteTournamentTypeNameHint') %></p>
+
+  <form method="post" action="/admin/tournaments/<%= tournament.id %>/delete" class="stack-form">
+    <%- include("partials/csrf") %>
+    <label>
+      <%= t('admin.deleteTournamentConfirmNameLabel') %>
+      <input type="text" name="confirm_name" required placeholder="<%= tournament.name %>" />
+    </label>
+    <div class="tournament-actions">
+      <button type="submit" class="danger-btn"><%= t('admin.deleteTournament') %></button>
+      <a class="table-link" href="/admin/tournaments/manage"><%= t('admin.cancelDeleteTournament') %></a>
+    </div>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

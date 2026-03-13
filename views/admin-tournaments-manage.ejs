@@ -1,0 +1,120 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.manageTournaments') %></h1>
+  <p><%= t('admin.manageTournamentsHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "tournaments-manage", canManageUsers }) %>
+
+<section class="card">
+  <% if (!tournaments.length) { %>
+    <p><%= t('tournaments.noData') %></p>
+  <% } else { %>
+    <ul class="simple-list">
+      <% tournaments.forEach((item) => { %>
+        <li>
+          <% const dateValue = item.played_on instanceof Date
+            ? item.played_on.toISOString().slice(0, 10)
+            : String(item.played_on || '').slice(0, 10); %>
+          <form method="post" action="/admin/tournaments/<%= item.id %>/update" class="stack-form">
+            <%- include("partials/csrf") %>
+            <label>
+              <%= t('admin.tournamentName') %>
+              <input type="text" name="name" value="<%= item.name %>" required />
+            </label>
+            <label>
+              <%= t('admin.date') %>
+              <input
+                type="date"
+                name="played_on"
+                value="<%= dateValue %>"
+                required
+                onclick="if (this.showPicker) { try { this.showPicker(); } catch (_error) {} }"
+              />
+            </label>
+            <div class="tournament-actions">
+              <button type="submit"><%= t('admin.updateTournament') %></button>
+              <button
+                type="button"
+                class="tournament-delete-btn"
+                data-delete-form-id="delete-tournament-<%= item.id %>"
+                data-delete-name="<%= item.name %>"
+              ><%= t('admin.deleteTournament') %></button>
+            </div>
+          </form>
+          <form id="delete-tournament-<%= item.id %>" method="post" action="/admin/tournaments/<%= item.id %>/delete" class="hidden-field">
+            <%- include("partials/csrf") %>
+          </form>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<div id="delete-tournament-modal" class="detect-progress-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="detect-progress-card">
+    <h3><%= t('admin.deleteTournament') %></h3>
+    <p id="delete-tournament-modal-text"><%= t('admin.deleteTournamentConfirm') %></p>
+    <div class="tournament-actions modal-actions">
+      <button type="button" id="delete-tournament-confirm" class="tournament-delete-btn"><%= t('admin.confirmDeleteTournament') %></button>
+      <button type="button" id="delete-tournament-cancel"><%= t('admin.cancelDeleteTournament') %></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modal = document.getElementById("delete-tournament-modal");
+    const modalText = document.getElementById("delete-tournament-modal-text");
+    const confirmButton = document.getElementById("delete-tournament-confirm");
+    const cancelButton = document.getElementById("delete-tournament-cancel");
+    const triggers = Array.from(document.querySelectorAll("[data-delete-form-id]"));
+    if (!modal || !modalText || !confirmButton || !cancelButton || !triggers.length) {
+      return;
+    }
+
+    let pendingFormId = "";
+
+    function closeModal() {
+      modal.classList.remove("is-visible");
+      modal.setAttribute("aria-hidden", "true");
+      pendingFormId = "";
+    }
+
+    triggers.forEach((button) => {
+      button.addEventListener("click", function () {
+        pendingFormId = String(button.getAttribute("data-delete-form-id") || "");
+        const tournamentName = String(button.getAttribute("data-delete-name") || "");
+        modalText.textContent = `${"<%= t('admin.deleteTournamentConfirm') %>"} ${tournamentName}`;
+        modal.classList.add("is-visible");
+        modal.setAttribute("aria-hidden", "false");
+      });
+    });
+
+    cancelButton.addEventListener("click", closeModal);
+
+    confirmButton.addEventListener("click", function () {
+      if (!pendingFormId) {
+        closeModal();
+        return;
+      }
+
+      const form = document.getElementById(pendingFormId);
+      if (form) {
+        form.submit();
+      } else {
+        closeModal();
+      }
+    });
+  })();
+</script>
+
+<%- include("partials/footer") %>

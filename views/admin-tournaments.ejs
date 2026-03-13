@@ -14,62 +14,26 @@
 
 <%- include("partials/admin-nav", { active: "tournaments", canManageUsers }) %>
 
-<section class="grid">
-  <article class="card">
-    <h2><%= t('admin.createTournament') %></h2>
-    <form method="post" action="/admin/tournaments" class="stack-form">
-      <%- include("partials/csrf") %>
-      <label>
-        <%= t('admin.tournamentName') %>
-        <input type="text" name="name" required placeholder="<%= t('placeholders.tournamentName') %>" />
-      </label>
-      <label>
-        <%= t('admin.date') %>
-        <input type="date" name="played_on" required />
-      </label>
-      <button type="submit"><%= t('admin.saveTournament') %></button>
-    </form>
-  </article>
-
-  <article class="card">
-    <h2><%= t('admin.manageTournaments') %></h2>
-    <% if (!tournaments.length) { %>
-      <p><%= t('tournaments.noData') %></p>
-    <% } else { %>
-      <ul class="simple-list">
-        <% tournaments.forEach((item) => { %>
-          <li>
-            <% const dateValue = item.played_on instanceof Date
-              ? item.played_on.toISOString().slice(0, 10)
-              : String(item.played_on || '').slice(0, 10); %>
-            <form method="post" action="/admin/tournaments/<%= item.id %>/update" class="stack-form">
-              <%- include("partials/csrf") %>
-              <label>
-                <%= t('admin.tournamentName') %>
-                <input type="text" name="name" value="<%= item.name %>" required />
-              </label>
-              <label>
-                <%= t('admin.date') %>
-                <input type="date" name="played_on" value="<%= dateValue %>" required />
-              </label>
-              <div>
-                <button type="submit"><%= t('admin.updateTournament') %></button>
-              </div>
-            </form>
-            <form
-              method="post"
-              action="/admin/tournaments/<%= item.id %>/delete"
-              class="inline-form"
-              onsubmit="return confirm('<%= t('admin.deleteTournamentConfirm') %>')"
-            >
-              <%- include("partials/csrf") %>
-              <button type="submit" class="danger-btn"><%= t('admin.deleteTournament') %></button>
-            </form>
-          </li>
-        <% }) %>
-      </ul>
-    <% } %>
-  </article>
+<section class="card">
+  <h2><%= t('admin.createTournament') %></h2>
+  <form method="post" action="/admin/tournaments" class="stack-form">
+    <%- include("partials/csrf") %>
+    <label>
+      <%= t('admin.tournamentName') %>
+      <input type="text" name="name" required placeholder="<%= t('placeholders.tournamentName') %>" />
+    </label>
+    <label>
+      <%= t('admin.date') %>
+      <input
+        type="date"
+        name="played_on"
+        required
+        onclick="if (this.showPicker) { try { this.showPicker(); } catch (_error) {} }"
+      />
+    </label>
+    <button type="submit"><%= t('admin.saveTournament') %></button>
+  </form>
+  <p class="subtle"><a class="table-link" href="/admin/tournaments/manage"><%= t('admin.navManageTournaments') %></a></p>
 </section>
 
 <%- include("partials/footer") %>

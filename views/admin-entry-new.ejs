@@ -18,7 +18,7 @@
   <h2><%= t('admin.importCompanionResults') %></h2>
   <p class="subtle"><%= t('admin.importCompanionResultsHint') %></p>
 
-  <form method="post" action="/admin/entries/import-screenshot" enctype="multipart/form-data" class="stack-form">
+  <form id="detect-players-form" method="post" action="/admin/entries/import-screenshot" enctype="multipart/form-data" class="stack-form">
     <%- include("partials/csrf") %>
 
     <label>
@@ -41,13 +41,21 @@
 
     <label>
       <%= t('admin.importScreenshotImage') %>
-      <input type="file" name="screenshot" accept="image/*" required />
+      <input type="file" name="screenshots" accept="image/*" multiple required />
       <small class="subtle"><%= t('admin.importScreenshotImageHint') %></small>
     </label>
 
-    <button type="submit"><%= t('admin.importCompanionResultsBtn') %></button>
+    <button id="detect-players-submit" type="submit"><%= t('admin.importCompanionPreviewBtn') %></button>
   </form>
 </section>
+
+<div id="detect-progress-modal" class="detect-progress-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="detect-progress-card">
+    <div class="detect-progress-spinner" aria-hidden="true"></div>
+    <h3><%= t('admin.importProgressTitle') %></h3>
+    <p id="detect-progress-text"><%= t('admin.importProgressUploading') %></p>
+  </div>
+</div>
 
 <section class="card">
   <form method="post" action="/admin/entries" class="stack-form">
@@ -149,6 +157,37 @@
 
     userSelect.addEventListener("change", filterDecklists);
     filterDecklists();
+  })();
+
+  (function () {
+    const detectForm = document.getElementById("detect-players-form");
+    const modal = document.getElementById("detect-progress-modal");
+    const progressText = document.getElementById("detect-progress-text");
+    const submitButton = document.getElementById("detect-players-submit");
+    if (!detectForm || !modal || !progressText || !submitButton) {
+      return;
+    }
+
+    let submitted = false;
+
+    detectForm.addEventListener("submit", function () {
+      if (submitted) {
+        return;
+      }
+
+      submitted = true;
+      submitButton.disabled = true;
+      modal.classList.add("is-visible");
+      modal.setAttribute("aria-hidden", "false");
+
+      const uploadingText = "<%= t('admin.importProgressUploading') %>";
+      const detectingText = "<%= t('admin.importProgressDetecting') %>";
+      progressText.textContent = uploadingText;
+
+      window.setTimeout(function () {
+        progressText.textContent = detectingText;
+      }, 900);
+    });
   })();
 </script>
 

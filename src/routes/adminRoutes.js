@@ -62,6 +62,153 @@ function createAdminRouter({
       .replace(/^-|-$/g, "");
   }
 
+  function toArray(value) {
+    if (Array.isArray(value)) {
+      return value;
+    }
+    if (value === undefined || value === null) {
+      return [];
+    }
+    return [value];
+  }
+
+  function normalizePlayerKey(name) {
+    return String(name || "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+  }
+
+  function cleanImportedPlayerName(name) {
+    let cleaned = String(name || "")
+      .replace(/\.{2,}/g, " ")
+      .replace(/[|]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    // OCR garbage often appends percentages/ranks/next-row fragments after the name.
+    cleaned = cleaned.replace(/%.*$/g, "").trim();
+
+    const firstDigitIndex = cleaned.search(/\d/);
+    if (firstDigitIndex >= 0) {
+      cleaned = cleaned.slice(0, firstDigitIndex).trim();
+    }
+
+    // Remove short all-caps tail tokens like "BN" that commonly appear from OCR artifacts.
+    while (/\s[A-Z]{1,3}$/.test(cleaned)) {
+      cleaned = cleaned.replace(/\s[A-Z]{1,3}$/, "").trim();
+    }
+
+    cleaned = cleaned
+      .replace(/\s+/g, " ")
+      .replace(/[\-.,;:]+$/g, "")
+      .trim();
+
+    return cleaned.slice(0, 120);
+  }
+
+  function resolveDuplicateKey(existingKeys, key) {
+    if (!key) {
+      return "";
+    }
+
+    for (const existingKey of existingKeys) {
+      if (existingKey === key) {
+        return existingKey;
+      }
+
+      // Treat contained variants as duplicates, e.g. "raphaelkohl" vs "raphaelkohlbn".
+      if (key.length >= 8 && existingKey.length >= 8 && (existingKey.includes(key) || key.includes(existingKey))) {
+        return existingKey;
+      }
+    }
+
+    return key;
+  }
+
+  function scoreImportedRow(row) {
+    const games = Number(row.wins || 0) + Number(row.losses || 0) + Number(row.draws || 0);
+    const wins = Number(row.wins || 0);
+    const rank = Number(row.rank || 999);
+    return (games * 1000) + (wins * 10) - rank;
+  }
+
+  function dedupeImportedRows(rows) {
+    const byPlayer = new Map();
+    for (const row of rows) {
+      const playerName = cleanImportedPlayerName(row.playerName);
+      const key = normalizePlayerKey(playerName);
+      if (!key) {
+        continue;
+      }
+
+      const resolvedKey = resolveDuplicateKey([...byPlayer.keys()], key);
+      const normalizedRow = {
+        ...row,
+        playerName,
+      };
+
+      const current = byPlayer.get(resolvedKey);
+      if (!current || scoreImportedRow(normalizedRow) > scoreImportedRow(current)) {
+        byPlayer.set(resolvedKey, normalizedRow);
+      }
+    }
+
+    return [...byPlayer.values()].sort((a, b) => {
+      const rankDelta = Number(a.rank || 999) - Number(b.rank || 999);
+      if (rankDelta !== 0) {
+        return rankDelta;
+      }
+      return String(a.playerName || "").localeCompare(String(b.playerName || ""));
+    });
+  }
+
+  function parseRowsFromCommitBody(body) {
+    const ranks = toArray(body.row_rank);
+    const names = toArray(body.row_player_name);
+    const decks = toArray(body.row_deck);
+    const wins = toArray(body.row_wins);
+    const losses = toArray(body.row_losses);
+    const draws = toArray(body.row_draws);
+    const included = new Set(toArray(body.include_row).map((value) => Number(value)));
+
+    const rows = [];
+    const count = Math.max(ranks.length, names.length, decks.length, wins.length, losses.length, draws.length);
+    for (let i = 0; i < count; i += 1) {
+      if (!included.has(i)) {
+        continue;
+      }
+
+      const playerName = cleanImportedPlayerName(names[i]);
+      const rowDeck = String(sanitizePlainText(decks[i] || "")).slice(0, 120).trim();
+      const rank = Number(ranks[i] || 0);
+      const rowWins = Number(wins[i] || 0);
+      const rowLosses = Number(losses[i] || 0);
+      const rowDraws = Number(draws[i] || 0);
+
+      if (!playerName) {
+        continue;
+      }
+
+      if ([rowWins, rowLosses, rowDraws].some((value) => Number.isNaN(value) || value < 0)) {
+        continue;
+      }
+
+      rows.push({
+        rank: Number.isNaN(rank) ? 0 : rank,
+        playerName,
+        deck: rowDeck,
+        wins: rowWins,
+        losses: rowLosses,
+        draws: rowDraws,
+      });
+    }
+
+    return rows;
+  }
+
   async function loadAdminDashboardData() {
     return adminRepository.getAdminDashboardData();
   }
@@ -143,8 +290,8 @@ function createAdminRouter({
     });
   }
 
-  function uploadCompanionScreenshot(req, res, next) {
-    importUpload.single("screenshot")(req, res, (error) => {
+  function uploadCompanionScreenshots(req, res, next) {
+    importUpload.array("screenshots", 10)(req, res, (error) => {
       if (error) {
         return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotImageInvalid");
       }
@@ -201,15 +348,31 @@ function createAdminRouter({
       const playedOn = String(req.body.played_on || "").trim();
 
       if (!tournamentId || !name || !playedOn) {
-        return res.redirect("/admin/tournaments?error_key=flash.admin.tournamentRequired");
+        return res.redirect("/admin/tournaments/manage?error_key=flash.admin.tournamentRequired");
       }
 
       const updated = await adminRepository.updateTournament(tournamentId, name, playedOn);
       if (!updated) {
-        return res.redirect("/admin/tournaments?error_key=flash.tournament.notFound");
+        return res.redirect("/admin/tournaments/manage?error_key=flash.tournament.notFound");
       }
 
-      return res.redirect("/admin/tournaments?message_key=flash.admin.tournamentUpdated");
+      return res.redirect("/admin/tournaments/manage?message_key=flash.admin.tournamentUpdated");
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/admin/tournaments/manage", requireRole("maintainer"), async (req, res, next) => {
+    try {
+      const { tournaments } = await loadAdminDashboardData();
+
+      return res.render("admin-tournaments-manage", {
+        title: req.__("admin.manageTournaments"),
+        tournaments,
+        canManageUsers: hasRole(req.session.role, "admin"),
+        message: res.locals.queryMessage,
+        error: res.locals.queryError,
+      });
     } catch (error) {
       return next(error);
     }
@@ -219,15 +382,15 @@ function createAdminRouter({
     try {
       const tournamentId = Number(req.params.tournamentId || 0);
       if (!tournamentId) {
-        return res.redirect("/admin/tournaments?error_key=flash.tournament.invalidId");
+        return res.redirect("/admin/tournaments/manage?error_key=flash.tournament.invalidId");
       }
 
       const deleted = await adminRepository.deleteTournament(tournamentId);
       if (!deleted) {
-        return res.redirect("/admin/tournaments?error_key=flash.tournament.notFound");
+        return res.redirect("/admin/tournaments/manage?error_key=flash.tournament.notFound");
       }
 
-      return res.redirect("/admin/tournaments?message_key=flash.admin.tournamentDeleted");
+      return res.redirect("/admin/tournaments/manage?message_key=flash.admin.tournamentDeleted");
     } catch (error) {
       return next(error);
     }
@@ -462,9 +625,9 @@ function createAdminRouter({
   router.post(
     "/admin/entries/import-screenshot",
     requireRole("maintainer"),
-    uploadCompanionScreenshot,
+    uploadCompanionScreenshots,
     async (req, res, next) => {
-      let uploadPath = "";
+      const uploadPaths = [];
 
       try {
         const tournamentId = Number(req.body.tournament_id || 0);
@@ -475,51 +638,94 @@ function createAdminRouter({
           return res.redirect("/admin/entries/new?error_key=flash.admin.tournamentOnlyRequired");
         }
 
-        if (!req.file?.path) {
+        if (!Array.isArray(req.files) || req.files.length === 0) {
           return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotImageRequired");
         }
 
-        uploadPath = req.file.path;
+        const parsedRows = [];
+        for (const file of req.files) {
+          if (!file?.path) {
+            continue;
+          }
 
-        const imageBuffer = await fs.promises.readFile(req.file.path);
-        const { entries } = await extractCompanionStandingsFromImage(imageBuffer);
+          uploadPaths.push(file.path);
+          const imageBuffer = await fs.promises.readFile(file.path);
+          const { entries } = await extractCompanionStandingsFromImage(imageBuffer);
+          parsedRows.push(...entries);
+        }
 
-        if (!entries.length) {
+        if (!parsedRows.length) {
           return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotNoRows");
         }
 
-        for (const row of entries) {
-          await adminRepository.createEntry({
-            tournamentId,
-            playerName: row.playerName,
-            userId: null,
-            decklistId: null,
-            deck: defaultDeck,
-            wins: row.wins,
-            losses: row.losses,
-            draws: row.draws,
-          });
-        }
+        const dedupedRows = dedupeImportedRows(parsedRows);
+        const duplicatesRemoved = Math.max(0, parsedRows.length - dedupedRows.length);
+        const { tournaments } = await loadAdminDashboardData();
+        const selectedTournament = tournaments.find((item) => Number(item.id) === tournamentId) || null;
 
-        const maxRank = entries.reduce((max, row) => Math.max(max, Number(row.rank || 0)), 0);
-        const estimatedMissing = maxRank > entries.length ? maxRank - entries.length : 0;
-        const importedMessage =
-          estimatedMissing > 0
-            ? `${req.__("flash.admin.screenshotImported")}: ${entries.length} (${req.__("flash.admin.screenshotMissingRows")} ${estimatedMissing})`
-            : `${req.__("flash.admin.screenshotImported")}: ${entries.length}`;
-
-        return res.redirect(
-          `/admin/entries?message=${encodeURIComponent(importedMessage)}`
-        );
+        return res.render("admin-entry-import-preview", {
+          title: req.__("admin.importCompanionPreview"),
+          canManageUsers: hasRole(req.session.role, "admin"),
+          tournamentId,
+          defaultDeck,
+          selectedTournament,
+          rows: dedupedRows,
+          sourceRowsCount: parsedRows.length,
+          duplicatesRemoved,
+          message: res.locals.queryMessage,
+          error: res.locals.queryError,
+        });
       } catch (error) {
         return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotParseFailed");
       } finally {
-        if (uploadPath) {
-          fs.promises.unlink(uploadPath).catch(() => {});
-        }
+        await Promise.all(uploadPaths.map((filePath) => fs.promises.unlink(filePath).catch(() => {})));
       }
     }
   );
+
+  router.post("/admin/entries/import-screenshot/commit", requireRole("maintainer"), async (req, res, next) => {
+    try {
+      const tournamentId = Number(req.body.tournament_id || 0);
+      const defaultDeckRaw = sanitizePlainText(req.body.default_deck || "");
+      const defaultDeck = String(defaultDeckRaw || "").slice(0, 120).trim();
+      const fallbackDeck = defaultDeck || "Unknown (Companion import)";
+
+      if (!tournamentId) {
+        return res.redirect("/admin/entries/new?error_key=flash.admin.tournamentOnlyRequired");
+      }
+
+      const editedRows = parseRowsFromCommitBody(req.body);
+      const dedupedRows = dedupeImportedRows(editedRows);
+
+      if (!dedupedRows.length) {
+        return res.redirect("/admin/entries/new?error_key=flash.admin.screenshotNoRows");
+      }
+
+      for (const row of dedupedRows) {
+        const rowDeck = String(row.deck || "").trim();
+        await adminRepository.createEntry({
+          tournamentId,
+          playerName: row.playerName,
+          userId: null,
+          decklistId: null,
+          deck: rowDeck || fallbackDeck,
+          wins: row.wins,
+          losses: row.losses,
+          draws: row.draws,
+        });
+      }
+
+      const duplicatesRemoved = Math.max(0, editedRows.length - dedupedRows.length);
+      const importedMessage =
+        duplicatesRemoved > 0
+          ? `${req.__("flash.admin.screenshotImported")}: ${dedupedRows.length} (${req.__("flash.admin.screenshotDuplicatesRemoved")} ${duplicatesRemoved})`
+          : `${req.__("flash.admin.screenshotImported")}: ${dedupedRows.length}`;
+
+      return res.redirect(`/admin/entries?message=${encodeURIComponent(importedMessage)}`);
+    } catch (error) {
+      return next(error);
+    }
+  });
 
   router.post("/admin/entries", requireRole("maintainer"), async (req, res, next) => {
     try {

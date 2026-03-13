@@ -1,0 +1,107 @@
+<%- include("partials/header", { title }) %>
+
+<section class="hero">
+  <h1><%= t('admin.importCompanionPreview') %></h1>
+  <p><%= t('admin.importCompanionPreviewHint') %></p>
+</section>
+
+<% if (message) { %>
+  <p class="flash success"><%= message %></p>
+<% } %>
+<% if (error) { %>
+  <p class="flash error"><%= error %></p>
+<% } %>
+
+<%- include("partials/admin-nav", { active: "entry-new", canManageUsers }) %>
+
+<section class="card">
+  <p>
+    <strong><%= t('admin.tournament') %>:</strong>
+    <% if (selectedTournament) { %>
+      <%= selectedTournament.name %> (<%= new Date(selectedTournament.played_on).toLocaleDateString() %>)
+    <% } else { %>
+      #<%= tournamentId %>
+    <% } %>
+  </p>
+  <p><strong><%= t('admin.importDetectedRows') %>:</strong> <%= sourceRowsCount %></p>
+  <p><strong><%= t('admin.importUniqueRows') %>:</strong> <%= rows.length %></p>
+  <% if (duplicatesRemoved > 0) { %>
+    <p><strong><%= t('admin.importDuplicatesRemoved') %>:</strong> <%= duplicatesRemoved %></p>
+  <% } %>
+</section>
+
+<section class="card">
+  <% if (!rows.length) { %>
+    <p><%= t('admin.noEntries') %></p>
+    <a class="table-link" href="/admin/entries/new"><%= t('admin.navAddEntry') %></a>
+  <% } else { %>
+    <form method="post" action="/admin/entries/import-screenshot/commit" class="stack-form">
+      <%- include("partials/csrf") %>
+      <input type="hidden" name="tournament_id" value="<%= tournamentId %>" />
+
+      <label>
+        <%= t('admin.importDefaultDeck') %>
+        <input type="text" name="default_deck" value="<%= defaultDeck %>" maxlength="120" />
+      </label>
+
+      <div class="table-wrap">
+        <table class="import-preview-table">
+          <thead>
+            <tr>
+              <th><%= t('admin.importUseRow') %></th>
+              <th><%= t('common.player') %></th>
+              <th><%= t('common.deck') %></th>
+              <th><%= t('common.wld') %></th>
+              <th>Rank</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rows.forEach((row, index) => { %>
+              <tr>
+                <td data-label="<%= t('admin.importUseRow') %>">
+                  <input type="checkbox" name="include_row" value="<%= index %>" checked />
+                </td>
+                <td data-label="<%= t('common.player') %>">
+                  <input type="hidden" name="row_rank" value="<%= row.rank || 0 %>" />
+                  <input type="text" name="row_player_name" value="<%= row.playerName %>" required />
+                </td>
+                <td data-label="<%= t('common.deck') %>">
+                  <input
+                    type="text"
+                    name="row_deck"
+                    value="<%= row.deck || '' %>"
+                    placeholder="<%= t('admin.importDefaultDeck') %>"
+                    maxlength="120"
+                  />
+                </td>
+                <td data-label="<%= t('common.wld') %>">
+                  <div class="import-wld-grid">
+                    <label class="import-wld-field">
+                      <span><%= t('admin.wins') %></span>
+                      <input type="number" name="row_wins" min="0" value="<%= row.wins %>" required />
+                    </label>
+                    <label class="import-wld-field">
+                      <span><%= t('admin.losses') %></span>
+                      <input type="number" name="row_losses" min="0" value="<%= row.losses %>" required />
+                    </label>
+                    <label class="import-wld-field">
+                      <span><%= t('admin.draws') %></span>
+                      <input type="number" name="row_draws" min="0" value="<%= row.draws %>" required />
+                    </label>
+                  </div>
+                </td>
+                <td data-label="Rank"><%= row.rank || '-' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <button type="submit"><%= t('admin.importCompanionSubmitBtn') %></button>
+      </div>
+    </form>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>
